@@ -132,8 +132,8 @@
       "title": "v2 polish: image slimming, public rate limit, session sweep",
       "bodyHash": "10b6e88c7b3c4cd4",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-31T09:09:21Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T11:39:24Z"
     },
     "19": {
       "title": "v2 P3 verify failed adversarial pass: (1) draft-KR one-retry promise doesn't cover throw-class invalid output — malformed/truncated model JSON makes beta.messages.parse throw AnthropicError (base class, not APIError) which skips the retry and falls to the generic 502; (2) improve-kr can 500 instead of a typed error — improveWrapperSchema allows critique: [] but the shared response schema requires min(1), failing response serialization; (3) claimed test coverage missing: 529/RateLimitError mappings never exercised, team 30/hr limit untested, improve-kr 409/429 untested, /ai/status feature-off + no-key states untested API-side, non-member 404 untested, retry test doesn't count attempts.",
