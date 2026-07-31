@@ -9,8 +9,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
+import type { CycleResponse } from '@okrdokey/shared';
+
 import { apiFetch, ApiError } from '../api.js';
 import { Button, Card, Field } from '../components/bits.js';
+import { DataCard } from '../components/data-card.js';
+import { RolloverDialog } from '../components/rollover-dialog.js';
 import { useCycles, useSummary } from '../queries.js';
 
 // One row of the compare strip — avg score bar + status counts, all from
@@ -44,9 +48,18 @@ function CompareRow({ cycleId, name }: { cycleId: string; name: string }): React
 export function CyclesPage(): ReactNode {
   const cycles = useCycles();
   const qc = useQueryClient();
+  const [rolling, setRolling] = useState<CycleResponse | null>(null);
   const [name, setName] = useState('');
   const [startsOn, setStartsOn] = useState('');
   const [endsOn, setEndsOn] = useState('');
+
+  const close = useMutation({
+    mutationFn: (cycleId: string) =>
+      apiFetch(`/cycles/${cycleId}/close`, cycleResponseSchema.pick({ id: true, status: true }), {
+        method: 'POST',
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['cycles'] }),
+  });
 
   const create = useMutation({
     mutationFn: () =>
@@ -92,9 +105,28 @@ export function CyclesPage(): ReactNode {
               {c.startsOn} → {c.endsOn}
             </p>
             <p className="mt-1 text-xs uppercase tracking-wide text-ink-soft">{c.status}</p>
+            {c.status === 'open' ? (
+              <div className="mt-2 flex gap-2">
+                <Button variant="ghost" onClick={() => setRolling(c)}>
+                  roll over…
+                </Button>
+                <Button variant="ghost" onClick={() => close.mutate(c.id)} disabled={close.isPending}>
+                  close
+                </Button>
+              </div>
+            ) : null}
           </Card>
         ))}
       </div>
+      {close.error instanceof ApiError ? (
+        <p className="text-xs text-rag-red">{close.error.message}</p>
+      ) : null}
+
+      <DataCard />
+
+      {rolling && cycles.data ? (
+        <RolloverDialog source={rolling} cycles={cycles.data} onClose={() => setRolling(null)} />
+      ) : null}
 
       <Card>
         <p className="mb-1 font-semibold">New cycle</p>
