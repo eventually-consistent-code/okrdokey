@@ -8,6 +8,8 @@ import { Dialog } from 'radix-ui';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
+import { OBJECTIVE_SUGGESTIONS, TEMPLATE_FN_LABELS, type TemplateFn } from '@okrdokey/shared';
+
 import { Button, Field } from './bits.js';
 import { useCreateObjective, useTeams } from '../queries.js';
 
@@ -22,6 +24,7 @@ export function NewObjectiveDialog({
   const create = useCreateObjective();
   const [title, setTitle] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [category, setCategory] = useState<TemplateFn | ''>('');
 
   const submit = async (): Promise<void> => {
     if (!title.trim()) return;
@@ -42,7 +45,27 @@ export function NewObjectiveDialog({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Reduce churn"
               autoFocus
+              list="objective-suggestions"
             />
+            <datalist id="objective-suggestions">
+              {(category ? OBJECTIVE_SUGGESTIONS[category] : Object.values(OBJECTIVE_SUGGESTIONS).flat()).map(
+                (sugg) => (
+                  <option key={sugg} value={sugg} />
+                ),
+              )}
+            </datalist>
+            <div className="flex flex-wrap gap-1">
+              {(Object.keys(TEMPLATE_FN_LABELS) as TemplateFn[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setCategory(category === f ? '' : f)}
+                  className={`border px-2 py-0.5 text-xs ${category === f ? 'border-ink font-semibold' : 'border-line opacity-60'}`}
+                >
+                  {TEMPLATE_FN_LABELS[f]}
+                </button>
+              ))}
+            </div>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Team (blank = personal)

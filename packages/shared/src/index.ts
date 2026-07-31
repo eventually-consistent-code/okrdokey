@@ -498,3 +498,6 @@ export const publicKpiSchema = z.object({
 });
 
 export type PublicKpi = z.infer<typeof publicKpiSchema>;
+
+// Template library (wizard-lite) — see templates.ts
+export * from './templates.js';

@@ -52,10 +52,22 @@ test('signup → cycle → objective → check-in → dashboard', async ({ page 
   // score lands at 0.50
   await expect(page.getByText('0.50').first()).toBeVisible();
 
-  // dashboard reflects it
+  // guided path: the wizard teaches, prefills, and creates
+  await page.getByRole('button', { name: 'guide me' }).click();
+  await expect(page.getByText(/a number that changes/i)).toBeVisible();
+  await page.getByText(/deploy frequency/i).click();
+  await page.getByLabel(/baseline/i).fill('2');
+  await page.getByLabel(/target/i).fill('10');
+  await page.getByRole('button', { name: 'review' }).click();
+  await expect(page.getByText('Increase deploy frequency from 2 to 10 per week')).toBeVisible();
+  await page.getByRole('button', { name: /create key result/i }).click();
+  await expect(page.getByText('Increase deploy frequency from 2 to 10 per week')).toBeVisible();
+
+  // dashboard reflects it — objective mean is now (0.5 + 0)/2 with the
+  // fresh wizard KR at zero progress
   await page.getByRole('link', { name: 'dashboard' }).click();
   await expect(page.getByText('Reduce churn')).toBeVisible();
-  await expect(page.getByText('0.50').first()).toBeVisible();
+  await expect(page.getByText('0.25').first()).toBeVisible();
 
   // deep-link refresh survives the SPA fallback
   await page.reload();

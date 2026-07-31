@@ -98,8 +98,8 @@
       "labels": [
         "backlog"
       ],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:32Z"
+      "state": "in_progress",
+      "updatedAt": "2026-07-31T10:12:09Z"
     },
     "15": {
       "title": "v2 REQ: KPI tracking beside OKRs — cycle-less team metrics with computed health",

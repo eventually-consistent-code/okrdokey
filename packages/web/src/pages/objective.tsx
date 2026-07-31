@@ -13,6 +13,7 @@ import { Button, Card, RagDot, Score, StatusStamp } from '../components/bits.js'
 import { Sparkline } from '../components/charts.js';
 import { CheckInDialog } from '../components/check-in-dialog.js';
 import { LinkCard } from '../components/link-card.js';
+import { KrWizard } from '../components/kr-wizard.js';
 import { NewKeyResultForm } from '../components/new-key-result.js';
 import { useArchiveObjective, useCheckIns, useObjective } from '../queries.js';
 
@@ -73,6 +74,7 @@ export function ObjectivePage(): ReactNode {
   const archive = useArchiveObjective();
   const navigate = useNavigate();
   const [addingKr, setAddingKr] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   if (objective.isLoading) return <p className="text-sm text-ink-soft">loading…</p>;
   const o = objective.data;
@@ -94,20 +96,32 @@ export function ObjectivePage(): ReactNode {
       <div className="space-y-3">
         {o.keyResults.length === 0 ? (
           <Card>
-            <p className="text-sm text-ink-soft">
+            <p className="mb-3 text-sm text-ink-soft">
               An objective without key results is a wish — add something measurable…
             </p>
+            <Button onClick={() => setWizardOpen(true)}>add your first key result — guided</Button>
           </Card>
         ) : (
           o.keyResults.map((kr) => <KeyResultRow key={kr.id} kr={kr} objectiveId={o.id} />)
         )}
       </div>
 
+      {wizardOpen ? (
+        <KrWizard
+          objectiveId={o.id}
+          existingKrCount={o.keyResults.length}
+          onClose={() => setWizardOpen(false)}
+        />
+      ) : null}
+
       {addingKr ? (
         <NewKeyResultForm objectiveId={o.id} onDone={() => setAddingKr(false)} />
       ) : (
         <div className="flex gap-2">
           <Button onClick={() => setAddingKr(true)}>+ key result</Button>
+          <Button variant="ghost" onClick={() => setWizardOpen(true)}>
+            guide me
+          </Button>
           {!o.archivedAt ? (
             <Button
               variant="danger"
