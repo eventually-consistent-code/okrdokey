@@ -168,6 +168,15 @@ export function startScheduler(app: FastifyInstance, sessionSecret: string): Cro
     runSync(app, now, { adapters, sessionSecret }).catch((err: unknown) => {
       app.log.error(err, 'connector sync failed');
     });
+    // top of the hour: clear out expired session rows
+    if (now.getMinutes() === 0) {
+      try {
+        const swept = app.sessionStore.sweep();
+        if (swept > 0) app.log.info({ swept }, 'expired sessions swept');
+      } catch (err) {
+        app.log.error(err, 'session sweep failed');
+      }
+    }
   });
   app.log.info('cadence scheduler started (every minute)');
   return job;

@@ -48,6 +48,9 @@ declare module 'fastify' {
     user: SessionUser | null;
     apiToken: ApiTokenIdentity | null;
   }
+  interface FastifyInstance {
+    sessionStore: DrizzleSessionStore;
+  }
 }
 
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -79,9 +82,12 @@ async function sessionPluginImpl(
   opts: SessionPluginOptions,
 ): Promise<void> {
   await app.register(cookie);
+  // exposed on the instance so the scheduler can sweep expired rows
+  const store = new DrizzleSessionStore(app.db);
+  app.decorate('sessionStore', store);
   await app.register(session, {
     secret: opts.sessionSecret,
-    store: new DrizzleSessionStore(app.db),
+    store,
     cookieName: 'sessionId',
     cookie: {
       httpOnly: true,

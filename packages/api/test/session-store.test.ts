@@ -79,3 +79,14 @@ describe('DrizzleSessionStore', () => {
     expect(await get('sid-live')).toMatchObject({ userId: 'u2' });
   });
 });
+
+describe('scheduler exposure', () => {
+  it('buildApp decorates the instance with the session store', async () => {
+    const { buildApp } = await import('../src/app.js');
+    const app = await buildApp({ dbPath: ':memory:', sessionSecret: 'test-secret-at-least-32-chars-long!!' });
+    await app.ready();
+    expect(app.sessionStore).toBeInstanceOf(DrizzleSessionStore);
+    expect(app.sessionStore.sweep()).toBe(0);
+    await app.close();
+  });
+});
