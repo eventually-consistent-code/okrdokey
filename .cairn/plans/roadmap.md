@@ -5,7 +5,7 @@ milestone: 2
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | KPI Tracking — stability metrics beside OKRs | pending |
+| 1 | KPI Tracking — stability metrics beside OKRs | verified |
 | 2 | Wizard Lite — guided KR creation + templates | pending |
 | 3 | AI Drafting — BYO-key help writing measurable KRs | pending |
 | 4 | Polish — image slimming, rate limits, session sweep | pending |
