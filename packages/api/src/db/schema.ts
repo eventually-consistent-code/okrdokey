@@ -201,6 +201,7 @@ export const reminders = sqliteTable('reminders', {
   cronExpr: text('cron_expr').notNull(),
   timezone: text('timezone').notNull().default('UTC'),
   webhookUrl: text('webhook_url'),
+  emailEnabled: integer('email_enabled', { mode: 'boolean' }).notNull().default(false),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
   nextDueAt: integer('next_due_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -280,3 +281,29 @@ export const teamMembers = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.teamId, t.userId] })],
 );
+
+// Weekly digest schedules — one per team, same watermark pattern as
+// reminders (due-ness lives in the row, restarts can't lose it)
+export const digestSchedules = sqliteTable('digest_schedules', {
+  teamId: text('team_id')
+    .primaryKey()
+    .references(() => teams.id),
+  cronExpr: text('cron_expr').notNull(),
+  timezone: text('timezone').notNull().default('UTC'),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  nextDueAt: integer('next_due_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// Email delivery log — mirrors webhook_deliveries; bodies never stored
+export const emailDeliveries = sqliteTable('email_deliveries', {
+  id: text('id').primaryKey(),
+  kind: text('kind', { enum: ['reminder', 'digest', 'test'] }).notNull(),
+  sourceId: text('source_id').notNull(),
+  recipientCount: integer('recipient_count', { mode: 'number' }).notNull(),
+  attempts: integer('attempts', { mode: 'number' }).notNull().default(0),
+  deliveredAt: integer('delivered_at', { mode: 'timestamp' }),
+  deliveryFailedAt: integer('delivery_failed_at', { mode: 'timestamp' }),
+  lastError: text('last_error'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});

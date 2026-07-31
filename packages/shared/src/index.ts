@@ -12,6 +12,7 @@ import { z } from 'zod';
 export const healthResponseSchema = z.object({
   status: z.literal('ok'),
   version: z.string(),
+  email: z.boolean().default(false),
 });
 
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -245,6 +246,7 @@ export const upsertReminderRequestSchema = z.object({
   cronExpr: z.string().min(1).max(120),
   timezone: z.string().min(1).max(64).default('UTC'),
   webhookUrl: z.url().optional(),
+  emailEnabled: z.boolean().default(false),
   enabled: z.boolean().default(true),
 });
 
@@ -257,6 +259,7 @@ export const reminderResponseSchema = z.object({
   cronExpr: z.string(),
   timezone: z.string(),
   webhookUrl: z.string().nullable(),
+  emailEnabled: z.boolean(),
   enabled: z.boolean(),
   nextDueAt: z.iso.datetime(),
 });
@@ -310,6 +313,26 @@ export const cycleSummaryResponseSchema = z.object({
 });
 
 export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
+
+// Email digests
+
+export const digestScheduleRequestSchema = z.object({
+  cronExpr: z.string().min(9).max(100),
+  timezone: z.string().min(1).max(64).default('UTC'),
+  enabled: z.boolean().default(true),
+});
+
+export type DigestScheduleRequest = z.infer<typeof digestScheduleRequestSchema>;
+
+export const digestScheduleResponseSchema = z.object({
+  teamId: z.string(),
+  cronExpr: z.string(),
+  timezone: z.string(),
+  enabled: z.boolean(),
+  nextDueAt: z.iso.datetime().nullable(),
+});
+
+export type DigestScheduleResponse = z.infer<typeof digestScheduleResponseSchema>;
 
 // Data in / data out
 

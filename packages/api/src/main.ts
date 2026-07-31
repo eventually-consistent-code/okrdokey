@@ -16,11 +16,12 @@ const app = await buildApp({
   oidc: config.oidc,
   allowedOrigins: config.allowedOrigins,
   ai: config.ai,
+  smtp: config.smtp,
 });
 
 try {
   await app.listen({ port: config.port, host: config.host });
-  startScheduler(app, config.sessionSecret);
+  startScheduler(app, config.sessionSecret, app.mailer ?? undefined);
   app.log.info(`docs live at http://localhost:${config.port}/docs`);
 } catch (err) {
   app.log.error(err);

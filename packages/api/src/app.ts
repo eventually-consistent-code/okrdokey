@@ -30,8 +30,10 @@ import { registerOidcRoutes } from './auth/oidc.js';
 import { addAuthGuard, sessionPlugin } from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
 import { registerTokenRoutes } from './auth/tokens.js';
+import { registerDigestRoutes } from './cadence/digest.js';
+import { buildMailer, type Mailer } from './cadence/mailer.js';
 import { registerReminderRoutes } from './cadence/reminders.js';
-import type { AiConfig, OidcConfig } from './config.js';
+import type { AiConfig, OidcConfig, SmtpConfig } from './config.js';
 import { registerLinkRoutes } from './connectors/links.js';
 import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
@@ -56,11 +58,14 @@ export interface BuildAppOptions {
   allowedOrigins?: string[];
   webDistPath?: string;
   ai?: AiConfig;
+  smtp?: SmtpConfig;
+  mailer?: Mailer; // test seam — overrides the SMTP transport
 }
 
 declare module 'fastify' {
   interface FastifyInstance {
     db: Db;
+    mailer: Mailer | null;
   }
 }
 
@@ -96,6 +101,8 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   // Database — one connection for the process, migrations applied on open
   const dbHandle = createDb(opts.dbPath);
   app.decorate('db', dbHandle.db);
+  // one mailer for the process — null means email features are dark
+  app.decorate('mailer', opts.mailer ?? (opts.smtp ? buildMailer(opts.smtp) : null));
   app.addHook('onClose', () => {
     dbHandle.close();
   });
@@ -163,7 +170,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
           500: errorResponseSchema,
         },
       },
-      handler: () => ({ status: 'ok' as const, version: API_VERSION }),
+      handler: () => ({ status: 'ok' as const, version: API_VERSION, email: app.mailer !== null }),
     });
 
     registerAuthRoutes(api);
@@ -175,6 +182,9 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerHistoryRoutes(api);
     registerCheckInRoutes(api);
     registerReminderRoutes(api);
+    if (api.mailer) {
+      registerDigestRoutes(api, api.mailer);
+    }
     registerSummaryRoutes(api);
     registerShareRoutes(api);
     registerKpiRoutes(api);

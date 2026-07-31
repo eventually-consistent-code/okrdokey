@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DataCard } from '../src/components/data-card.js';
+import { DigestCard } from '../src/components/digest-card.js';
 import { RolloverDialog } from '../src/components/rollover-dialog.js';
 
 afterEach(() => {
@@ -119,5 +120,43 @@ describe('DataCard import flow', () => {
     expect(await screen.findByText(/Grow — 2 KRs/)).toBeDefined();
     await user.click(screen.getByRole('button', { name: /import 1 objectives/i }));
     expect(await screen.findByTestId('import-done')).toBeDefined();
+  });
+});
+
+describe('DigestCard', () => {
+  const health = (email: boolean): unknown => ({ status: 'ok', version: '0', email });
+
+  it('renders nothing when the instance has no SMTP', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.resolve(json(health(false)))));
+    render(withClient(<DigestCard teamId="t1" />));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/Weekly digest/)).toBeNull();
+  });
+
+  it('enables a schedule and sends a preview', async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+      if (url === '/health') return Promise.resolve(json(health(true)));
+      if (url.endsWith('/digest/test')) return Promise.resolve(json({ sent: true }));
+      if (init?.method === 'PUT') {
+        return Promise.resolve(
+          json({ teamId: 't1', cronExpr: '0 9 * * 1', timezone: 'UTC', enabled: true, nextDueAt: '2026-08-03T09:00:00.000Z' }),
+        );
+      }
+      // GET schedule: first 404 (none), after save the invalidation refetches 200
+      return Promise.resolve(
+        fetchMock.mock.calls.filter(([u]) => (u).endsWith('/digest') && !(u).includes('test')).length > 2
+          ? json({ teamId: 't1', cronExpr: '0 9 * * 1', timezone: 'UTC', enabled: true, nextDueAt: '2026-08-03T09:00:00.000Z' })
+          : json({ statusCode: 404, error: 'NotFoundError', message: 'no digest schedule set' }, 404),
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(withClient(<DigestCard teamId="t1" />));
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /enable weekly digest/i }));
+    expect(await screen.findByTestId('digest-active')).toBeDefined();
+
+    await user.click(screen.getByRole('button', { name: /send me a preview/i }));
+    expect(await screen.findByText(/preview sent/i)).toBeDefined();
   });
 });

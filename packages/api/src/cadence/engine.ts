@@ -12,7 +12,9 @@ import type { FastifyInstance } from 'fastify';
 
 import { adapters } from '../connectors/registry.js';
 import { runSync } from '../connectors/sync.js';
-import { keyResults, objectives, reminders, webhookDeliveries } from '../db/schema.js';
+import { keyResults, objectives, reminders, teamMembers, users, webhookDeliveries } from '../db/schema.js';
+import { runDigestTick } from './digest.js';
+import { sendEmail, type Mailer } from './mailer.js';
 
 // Constants
 
@@ -31,6 +33,28 @@ const realSleep: SleepFn = (ms) =>
 
 export interface TickOptions {
   sleep?: SleepFn; // tests inject a no-op so retries don't actually wait
+  mailer?: Mailer; // present only when SMTP is configured
+}
+
+// Recipients for a reminder's scope — team roster, or the one user
+function reminderRecipients(
+  app: FastifyInstance,
+  reminder: typeof reminders.$inferSelect,
+): string[] {
+  if (reminder.teamId) {
+    return app.db
+      .select({ email: users.email })
+      .from(teamMembers)
+      .innerJoin(users, eq(users.id, teamMembers.userId))
+      .where(eq(teamMembers.teamId, reminder.teamId))
+      .all()
+      .map((m) => m.email);
+  }
+  if (reminder.userId) {
+    const u = app.db.select({ email: users.email }).from(users).where(eq(users.id, reminder.userId)).get();
+    return u ? [u.email] : [];
+  }
+  return [];
 }
 
 // How many KRs sit in the reminder's scope — team objectives for a team
@@ -144,6 +168,26 @@ export async function runTick(
       await deliver(app, deliveryId, reminder.webhookUrl, payload, sleep);
     }
 
+    if (reminder.emailEnabled && opts.mailer) {
+      const n = awaitingCount(app, reminder);
+      const to = reminderRecipients(app, reminder);
+      if (to.length > 0) {
+        await sendEmail(
+          app,
+          opts.mailer,
+          {
+            kind: 'reminder',
+            sourceId: reminder.id,
+            to,
+            subject: `[OKRdokey] check-in time — ${n} key results awaiting update`,
+            text: `Check-in time: ${n} key results are awaiting an update.\n\nTakes thirty seconds — new value, confidence color, done.`,
+            html: `<p style="font-family:sans-serif">Check-in time: <strong>${n}</strong> key results are awaiting an update.</p><p style="font-family:sans-serif">Takes thirty seconds — new value, confidence color, done.</p>`,
+          },
+          sleep,
+        );
+      }
+    }
+
     // No webhook configured → nothing to send in v1; just advance. A cron
     // that stops producing runs parks the reminder as disabled.
     const next = new Cron(reminder.cronExpr, { timezone: reminder.timezone }).nextRun(now);
@@ -157,14 +201,23 @@ export async function runTick(
 
 // Kicks off the every-minute tick. Called from main.ts AFTER listen —
 // buildApp stays pure so tests never grow a timer. No-op under test.
-export function startScheduler(app: FastifyInstance, sessionSecret: string): Cron | null {
+export function startScheduler(
+  app: FastifyInstance,
+  sessionSecret: string,
+  mailer?: Mailer,
+): Cron | null {
   if (process.env.NODE_ENV === 'test') return null;
 
   const job = new Cron('* * * * *', () => {
     const now = new Date();
-    runTick(app, now).catch((err: unknown) => {
+    runTick(app, now, { mailer }).catch((err: unknown) => {
       app.log.error(err, 'cadence tick failed');
     });
+    if (mailer) {
+      runDigestTick(app, mailer, now).catch((err: unknown) => {
+        app.log.error(err, 'digest tick failed');
+      });
+    }
     runSync(app, now, { adapters, sessionSecret }).catch((err: unknown) => {
       app.log.error(err, 'connector sync failed');
     });

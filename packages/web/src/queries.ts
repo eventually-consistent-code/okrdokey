@@ -6,6 +6,7 @@
 
 import {
   aiKeyResponseSchema,
+  healthResponseSchema,
   objectiveHistoryResponseSchema,
   aiStatusResponseSchema,
   checkInResponseSchema,
@@ -260,6 +261,18 @@ export function useArchiveKpi(teamId: string) {
     mutationFn: (kpiId: string) =>
       apiFetch(`/kpis/${kpiId}/archive`, kpiResponseSchema, { method: 'POST' }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['kpis', teamId] }),
+  });
+}
+
+// SMTP configured on this instance? (health carries the flag)
+export function useEmailFeature() {
+  return useQuery({
+    queryKey: ['email-feature'],
+    queryFn: async () => {
+      const h = await apiFetch('/health', healthResponseSchema);
+      return h.email;
+    },
+    staleTime: 300_000,
   });
 }
 

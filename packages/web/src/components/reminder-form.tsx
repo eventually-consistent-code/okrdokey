@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { Button, Card, Field } from './bits.js';
-import { useReminders, useUpsertReminder } from '../queries.js';
+import { useEmailFeature, useReminders, useUpsertReminder } from '../queries.js';
 
 const PRESETS = [
   { label: 'weekly (Mon 9am)', cron: '0 9 * * 1' },
@@ -24,12 +24,15 @@ export function ReminderForm({ teamId }: { teamId?: string }): ReactNode {
   const [cron, setCron] = useState(PRESETS[0]?.cron ?? '0 9 * * 1');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const email = useEmailFeature();
 
   useEffect(() => {
     if (existing) {
       setCron(existing.cronExpr);
       setTimezone(existing.timezone);
       setWebhookUrl(existing.webhookUrl ?? '');
+      setEmailEnabled(existing.emailEnabled);
     }
   }, [existing]);
 
@@ -39,6 +42,7 @@ export function ReminderForm({ teamId }: { teamId?: string }): ReactNode {
       cronExpr: cron,
       timezone,
       webhookUrl: webhookUrl.trim() || undefined,
+      emailEnabled,
       enabled: true,
     });
   };
@@ -72,6 +76,16 @@ export function ReminderForm({ teamId }: { teamId?: string }): ReactNode {
           onChange={(e) => setWebhookUrl(e.target.value)}
           placeholder="https://hooks.slack.com/services/…"
         />
+        {email.data ? (
+          <label className="flex items-center gap-2 text-sm" data-testid="reminder-email-toggle">
+            <input
+              type="checkbox"
+              checked={emailEnabled}
+              onChange={(e) => setEmailEnabled(e.target.checked)}
+            />
+            also email the team when a check-in is due
+          </label>
+        ) : null}
         {existing ? (
           <p className="ledger-num text-xs text-ink-soft">
             next nudge: {new Date(existing.nextDueAt).toLocaleString()}

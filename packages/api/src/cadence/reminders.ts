@@ -29,6 +29,7 @@ function toResponse(row: ReminderRow): z.infer<typeof reminderResponseSchema> {
     cronExpr: row.cronExpr,
     timezone: row.timezone,
     webhookUrl: row.webhookUrl,
+    emailEnabled: row.emailEnabled,
     enabled: row.enabled,
     nextDueAt: row.nextDueAt.toISOString(),
   };
@@ -85,7 +86,7 @@ export function registerReminderRoutes(app: FastifyInstance): void {
     },
     handler: async (req, reply) => {
       const user = req.user as { id: string };
-      const { teamId, cronExpr, timezone, webhookUrl, enabled } = req.body;
+      const { teamId, cronExpr, timezone, webhookUrl, emailEnabled, enabled } = req.body;
 
       // Team scope: unknown team and non-member answer identically (404,
       // teams-guard convention); members who aren't admins get the 403
@@ -123,7 +124,7 @@ export function registerReminderRoutes(app: FastifyInstance): void {
       if (existing) {
         app.db
           .update(reminders)
-          .set({ cronExpr, timezone, webhookUrl: webhookUrl ?? null, enabled, nextDueAt })
+          .set({ cronExpr, timezone, webhookUrl: webhookUrl ?? null, emailEnabled, enabled, nextDueAt })
           .where(eq(reminders.id, existing.id))
           .run();
         const fresh = app.db.select().from(reminders).where(eq(reminders.id, existing.id)).get();
@@ -137,6 +138,7 @@ export function registerReminderRoutes(app: FastifyInstance): void {
         cronExpr,
         timezone,
         webhookUrl: webhookUrl ?? null,
+        emailEnabled,
         enabled,
         nextDueAt,
         createdAt: now,
