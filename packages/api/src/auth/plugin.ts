@@ -78,7 +78,10 @@ async function sessionPluginImpl(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      // 'auto' = Secure only when the connection is actually encrypted —
+      // keeps docker-compose-up-on-localhost working while TLS deploys
+      // (direct or via trusted proxy) still get Secure cookies
+      secure: 'auto',
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
     saveUninitialized: false,

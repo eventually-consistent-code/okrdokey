@@ -118,6 +118,15 @@
       ],
       "state": "open",
       "updatedAt": "2026-07-31T00:02:36Z"
+    },
+    "17": {
+      "title": "Fresh docker container over plain http://localhost cannot keep a session — signup returns 200 but every authenticated call after it is 401, so login is impossible on a bare self-host without TLS",
+      "bodyHash": "e3b0c44298fc1c14",
+      "labels": [
+        "cairn:bug"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T08:17:56Z"
     }
   },
   "phases": {

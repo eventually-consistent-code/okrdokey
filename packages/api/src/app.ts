@@ -58,6 +58,9 @@ declare module 'fastify' {
 export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
     logger: process.env.NODE_ENV === 'test' ? false : { level: process.env.LOG_LEVEL ?? 'info' },
+    // reverse proxies terminate TLS for most self-hosts; trust their
+    // x-forwarded-proto so secure:'auto' cookies come out right
+    trustProxy: true,
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
