@@ -20,6 +20,7 @@ import {
 import authPlugin from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
 import { createDb, type Db } from './db/index.js';
+import { registerTeamRoutes } from './teams/routes.js';
 
 const API_VERSION = '0.1.0';
 
@@ -108,6 +109,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   });
 
   registerAuthRoutes(app);
+  registerTeamRoutes(app);
 
   return app;
 }

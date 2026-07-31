@@ -14,7 +14,7 @@ import { buildApp } from '../src/app.js';
 let app: FastifyInstance;
 
 // pulls "sessionId=..." out of a set-cookie header for replay
-function cookieOf(res: { headers: Record<string, string | string[] | undefined> }): string {
+function cookieOf(res: { headers: Record<string, number | string | string[] | undefined> }): string {
   const raw = res.headers['set-cookie'];
   const header = Array.isArray(raw) ? raw[0] : raw;
   return String(header).split(';')[0] ?? '';

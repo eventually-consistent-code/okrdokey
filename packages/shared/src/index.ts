@@ -51,3 +51,53 @@ export const userResponseSchema = z.object({
 });
 
 export type UserResponse = z.infer<typeof userResponseSchema>;
+
+// Teams
+
+export const teamRoleSchema = z.enum(['admin', 'member']);
+
+export type TeamRole = z.infer<typeof teamRoleSchema>;
+
+export const createTeamRequestSchema = z.object({
+  name: z.string().min(1).max(80),
+});
+
+export type CreateTeamRequest = z.infer<typeof createTeamRequestSchema>;
+
+// A team as the current user sees it — role is THEIR role, not a team field
+export const teamResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: teamRoleSchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type TeamResponse = z.infer<typeof teamResponseSchema>;
+
+export const teamMemberSchema = z.object({
+  userId: z.string(),
+  email: z.email(),
+  displayName: z.string(),
+  role: teamRoleSchema,
+});
+
+export type TeamMember = z.infer<typeof teamMemberSchema>;
+
+export const teamDetailResponseSchema = teamResponseSchema.extend({
+  members: z.array(teamMemberSchema),
+});
+
+export type TeamDetailResponse = z.infer<typeof teamDetailResponseSchema>;
+
+export const addMemberRequestSchema = z.object({
+  email: z.email(),
+  role: teamRoleSchema.default('member'),
+});
+
+export type AddMemberRequest = z.infer<typeof addMemberRequestSchema>;
+
+export const updateMemberRoleRequestSchema = z.object({
+  role: teamRoleSchema,
+});
+
+export type UpdateMemberRoleRequest = z.infer<typeof updateMemberRoleRequestSchema>;

@@ -5,7 +5,7 @@
  * Author(s): John Reed
  */
 
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // Schema version marker — proves the migration pipeline end-to-end.
 export const meta = sqliteTable('meta', {
@@ -30,3 +30,28 @@ export const sessions = sqliteTable('sessions', {
   data: text('data').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
 });
+
+// Teams — the unit of shared OKRs. Personal OKRs will use a nullable team_id,
+// so no phantom "personal team" rows ever exist.
+export const teams = sqliteTable('teams', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+// Membership + role in one row; the composite PK stops duplicate joins cold
+export const teamMembers = sqliteTable(
+  'team_members',
+  {
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    role: text('role', { enum: ['admin', 'member'] }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.teamId, t.userId] })],
+);
