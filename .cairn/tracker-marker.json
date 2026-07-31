@@ -143,6 +143,42 @@
       ],
       "state": "closed",
       "updatedAt": "2026-07-31T11:13:57Z"
+    },
+    "20": {
+      "title": "v3: Trends & history — charts from the check-in data we already have",
+      "bodyHash": "1cbc40b970816124",
+      "labels": [
+        "v3"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T11:58:08Z"
+    },
+    "21": {
+      "title": "v3: Cycle rollover — one-click carry-forward at quarter end",
+      "bodyHash": "2c217e7c245c9bdc",
+      "labels": [
+        "v3"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T11:58:13Z"
+    },
+    "22": {
+      "title": "v3: CSV import/export — the migration path in and out",
+      "bodyHash": "7d016b520f9459c3",
+      "labels": [
+        "v3"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T11:58:19Z"
+    },
+    "23": {
+      "title": "v3: Email digests — optional SMTP for teams not living in Slack",
+      "bodyHash": "5425ff92fa8bd1a9",
+      "labels": [
+        "v3"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T11:58:24Z"
     }
   },
   "phases": {

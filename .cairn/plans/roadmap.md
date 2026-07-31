@@ -5,10 +5,9 @@ milestone: 3
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | KPI Tracking — stability metrics beside OKRs | verified |
-| 2 | Wizard Lite — guided KR creation + templates | verified |
-| 3 | AI Drafting — BYO-key help writing measurable KRs | verified |
-| 4 | Polish — image slimming, rate limits, session sweep | verified |
+| 1 | Trends & History — charts from existing check-in data | pending |
+| 2 | Cycle & Data Lifecycle — rollover + CSV import/export | pending |
+| 3 | Email Digests — optional SMTP summaries + reminders | pending |
 
 ## Archived — v1
 
