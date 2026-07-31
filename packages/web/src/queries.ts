@@ -11,20 +11,23 @@ import {
   cycleResponseSchema,
   cycleSummaryResponseSchema,
   keyResultResponseSchema,
+  krLinkResponseSchema,
   objectiveResponseSchema,
   reminderResponseSchema,
   teamDetailResponseSchema,
   teamResponseSchema,
+  upsertKrLinkRequestSchema,
   userResponseSchema,
   type CreateCheckInRequest,
   type CreateKeyResultRequest,
   type CreateObjectiveRequest,
+  type UpsertKrLinkRequest,
   type UpsertReminderRequest,
 } from '@okrdokey/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { apiFetch, UnauthorizedError } from './api.js';
+import { ApiError, apiFetch, UnauthorizedError } from './api.js';
 
 export function useMe() {
   return useQuery({
@@ -157,5 +160,41 @@ export function useUpsertReminder() {
     mutationFn: (body: UpsertReminderRequest) =>
       apiFetch('/reminders', reminderResponseSchema, { method: 'PUT', body: JSON.stringify(body) }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['reminders'] }),
+  });
+}
+
+// KR ↔ tracker links — 404 on GET just means "not linked yet", not an error
+
+export function useKrLink(krId: string) {
+  return useQuery({
+    queryKey: ['kr-link', krId],
+    queryFn: async () => {
+      try {
+        return await apiFetch(`/key-results/${krId}/link`, krLinkResponseSchema);
+      } catch (err) {
+        if (err instanceof ApiError && err.statusCode === 404) return null;
+        throw err;
+      }
+    },
+  });
+}
+
+export function useUpsertKrLink(krId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpsertKrLinkRequest) =>
+      apiFetch(`/key-results/${krId}/link`, krLinkResponseSchema, {
+        method: 'PUT',
+        body: JSON.stringify(upsertKrLinkRequestSchema.parse(body)),
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['kr-link', krId] }),
+  });
+}
+
+export function useDeleteKrLink(krId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch(`/key-results/${krId}/link`, z.null(), { method: 'DELETE' }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['kr-link', krId] }),
   });
 }

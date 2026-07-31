@@ -4,6 +4,9 @@
  * Author(s): John Reed
  */
 
+import { githubAdapter } from './github.js';
 import type { AdapterRegistry } from './types.js';
 
-export const adapters: AdapterRegistry = {};
+export const adapters: AdapterRegistry = {
+  github: githubAdapter,
+};

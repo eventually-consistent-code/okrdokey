@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Button, Card, RagDot, Score, StatusStamp } from '../components/bits.js';
 import { Sparkline } from '../components/charts.js';
 import { CheckInDialog } from '../components/check-in-dialog.js';
+import { LinkCard } from '../components/link-card.js';
 import { NewKeyResultForm } from '../components/new-key-result.js';
 import { useArchiveObjective, useCheckIns, useObjective } from '../queries.js';
 
@@ -24,6 +25,7 @@ function KeyResultRow({
 }): ReactNode {
   const history = useCheckIns(kr.id);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [linking, setLinking] = useState(false);
   // history arrives newest-first; the sparkline reads left-to-right in time
   const trend = (history.data ?? []).map((c) => c.value).reverse();
 
@@ -47,14 +49,20 @@ function KeyResultRow({
         </div>
         <div className="flex flex-col items-end gap-2">
           <Score value={kr.score} />
-          <Button variant="ghost" onClick={() => setCheckingIn(true)}>
-            check in
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => setCheckingIn(true)}>
+              check in
+            </Button>
+            <Button variant="ghost" onClick={() => setLinking(true)}>
+              link
+            </Button>
+          </div>
         </div>
       </div>
       {checkingIn ? (
         <CheckInDialog kr={kr} objectiveId={objectiveId} onClose={() => setCheckingIn(false)} />
       ) : null}
+      {linking ? <LinkCard kr={kr} onClose={() => setLinking(false)} /> : null}
     </Card>
   );
 }
