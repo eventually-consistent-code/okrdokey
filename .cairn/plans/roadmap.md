@@ -6,7 +6,7 @@ milestone: 3
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Trends & History — charts from existing check-in data | verified |
-| 2 | Cycle & Data Lifecycle — rollover + CSV import/export | pending |
+| 2 | Cycle & Data Lifecycle — rollover + CSV import/export | verified |
 | 3 | Email Digests — optional SMTP summaries + reminders | pending |
 
 ## Archived — v1

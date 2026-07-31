@@ -197,6 +197,15 @@
       ],
       "state": "closed",
       "updatedAt": "2026-07-31T13:13:40Z"
+    },
+    "26": {
+      "title": "v3 P2 verify: two claimed-but-missing coverage spots — PLAN T1 promises \"percent/boolean reset\" tests but no boolean KR appears anywhere in lifecycle.test.ts, and T2's \"empty-KR objective row works\" is only exercised under dryRun, never committed. Same phantom-coverage class as decision-dad3ba9e.",
+      "bodyHash": "e3b0c44298fc1c14",
+      "labels": [
+        "cairn:bug"
+      ],
+      "state": "closed",
+      "updatedAt": "2026-07-31T14:22:48Z"
     }
   },
   "phases": {
