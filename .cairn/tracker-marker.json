@@ -5,8 +5,8 @@
       "title": "REQ-07: Documented REST API + persistent storage",
       "bodyHash": "3948de8f1b9cd9a1",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T00:06:47Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T00:12:50Z"
     },
     "2": {
       "title": "REQ-04: Multi-user auth — accounts, sessions, ownership",
