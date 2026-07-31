@@ -26,8 +26,8 @@
       "title": "REQ-01: OKR CRUD — objectives with key results",
       "bodyHash": "c147f54f4cc83dd9",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T05:17:12Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T05:21:19Z"
     },
     "5": {
       "title": "REQ-02: Check-in cadence engine — reminders, confidence, history",
