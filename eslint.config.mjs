@@ -22,8 +22,8 @@ export default tseslint.config(
     },
   },
   {
-    // Config files at the root aren't part of a TS project
-    files: ['*.mjs', '*.js', '*.ts'],
+    // Config files and the e2e specs aren't part of a TS project
+    files: ['*.mjs', '*.js', '*.ts', 'e2e/**/*.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
 );

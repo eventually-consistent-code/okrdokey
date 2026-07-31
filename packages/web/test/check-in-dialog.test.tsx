@@ -44,7 +44,7 @@ describe('CheckInDialog', () => {
   it('shows the KR and defaults to its current value', () => {
     renderDialog();
     expect(screen.getByText('Churn 5% → 2%')).toBeDefined();
-    expect((screen.getByLabelText(/current value/i) as HTMLInputElement).value).toBe('3.5');
+    expect(screen.getByLabelText<HTMLInputElement>(/current value/i).value).toBe('3.5');
   });
 
   it('posts value + picked confidence + note, then closes', async () => {
@@ -77,9 +77,9 @@ describe('CheckInDialog', () => {
     await user.click(screen.getByRole('button', { name: /save check-in/i }));
 
     expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/key-results/kr-1/check-ins');
-    expect(JSON.parse(String(init.body))).toMatchObject({
+    expect(JSON.parse(init.body as string) as unknown).toMatchObject({
       value: 3.1,
       confidence: 'red',
       note: 'rough week',
