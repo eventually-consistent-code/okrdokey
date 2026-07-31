@@ -45,7 +45,7 @@ export function AiKeyCard({ teamId }: { teamId: string }): ReactNode {
               {row.lastUsedAt ? ` · last used ${new Date(row.lastUsedAt).toLocaleDateString()}` : ' · not used yet'}
             </p>
           </div>
-          <Button variant="danger" onClick={() => void revoke.mutateAsync()} disabled={revoke.isPending}>
+          <Button variant="danger" onClick={() => revoke.mutate()} disabled={revoke.isPending}>
             revoke
           </Button>
         </div>
@@ -61,9 +61,7 @@ export function AiKeyCard({ teamId }: { teamId: string }): ReactNode {
             data-testid="ai-key-input"
           />
           <Button
-            onClick={() => {
-              void save.mutateAsync(key).then(() => setKey(''));
-            }}
+            onClick={() => save.mutate(key, { onSuccess: () => setKey('') })}
             disabled={key.trim().length < 20 || save.isPending}
           >
             {save.isPending ? 'checking…' : 'save key'}
