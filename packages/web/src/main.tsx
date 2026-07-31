@@ -23,6 +23,7 @@ import { LoginPage, SignupPage } from './pages/auth.js';
 import { CyclesPage } from './pages/cycles.js';
 import { DashboardPage } from './pages/dashboard.js';
 import { ObjectivePage } from './pages/objective.js';
+import { SharePage } from './pages/share.js';
 import { TeamPage, TeamsPage } from './pages/teams.js';
 import './styles.css';
 
@@ -43,6 +44,7 @@ const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage });
 const signupRoute = createRoute({ getParentRoute: () => rootRoute, path: '/signup', component: SignupPage });
+const shareRoute = createRoute({ getParentRoute: () => rootRoute, path: '/share/$token', component: SharePage });
 
 // guarded shell — bounce to /login when there's no session
 const appRoute = createRoute({
@@ -109,6 +111,7 @@ const cyclesRoute = createRoute({ getParentRoute: () => appRoute, path: '/my/cyc
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
+  shareRoute,
   appRoute.addChildren([dashboardRoute, objectiveRoute, teamsRoute, teamRoute, cyclesRoute]),
 ]);
 

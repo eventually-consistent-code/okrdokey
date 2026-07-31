@@ -123,6 +123,15 @@ export const reminders = sqliteTable('reminders', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// Share tokens — one per team; rotating = delete + new row, old links die
+export const shareTokens = sqliteTable('share_tokens', {
+  teamId: text('team_id')
+    .primaryKey()
+    .references(() => teams.id),
+  token: text('token').notNull().unique(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // Webhook deliveries — attempt log with a dead-letter flag
 export const webhookDeliveries = sqliteTable('webhook_deliveries', {
   id: text('id').primaryKey(),

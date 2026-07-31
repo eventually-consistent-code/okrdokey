@@ -302,3 +302,44 @@ export const cycleSummaryResponseSchema = z.object({
 });
 
 export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
+
+// Public share link
+
+export const shareTokenResponseSchema = z.object({
+  token: z.string(),
+  url: z.string(),
+  createdAt: z.iso.datetime(),
+});
+
+export type ShareTokenResponse = z.infer<typeof shareTokenResponseSchema>;
+
+// Read-only public view — deliberately narrow: no notes, no emails, no ids
+// beyond what the page needs
+export const publicKeyResultSchema = z.object({
+  title: z.string(),
+  unit: z.string().nullable(),
+  currentValue: z.number(),
+  target: z.number(),
+  score: z.number(),
+  currentConfidence: confidenceSchema.nullable(),
+});
+
+export const publicObjectiveSchema = z.object({
+  title: z.string(),
+  score: z.number(),
+  status: objectiveStatusSchema,
+  keyResults: z.array(publicKeyResultSchema),
+});
+
+export const publicSummaryResponseSchema = z.object({
+  teamName: z.string(),
+  cycles: z.array(
+    z.object({
+      cycle: cycleResponseSchema.pick({ name: true, startsOn: true, endsOn: true }),
+      elapsed: z.number(),
+      objectives: z.array(publicObjectiveSchema),
+    }),
+  ),
+});
+
+export type PublicSummaryResponse = z.infer<typeof publicSummaryResponseSchema>;

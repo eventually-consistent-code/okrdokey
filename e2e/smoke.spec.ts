@@ -61,3 +61,38 @@ test('signup → cycle → objective → check-in → dashboard', async ({ page 
   await page.reload();
   await expect(page.getByText('Reduce churn')).toBeVisible();
 });
+
+test('team share link serves a public read-only dashboard', async ({ page, browser }) => {
+  // new user + team + team objective
+  await page.goto('/signup');
+  await page.getByLabel('Name').fill('Sharer');
+  await page.getByLabel('Email').fill(`share-${Date.now()}@example.com`);
+  await page.getByLabel(/password/i).fill('correct-horse-battery');
+  await page.getByRole('button', { name: 'sign up' }).click();
+
+  await page.getByRole('link', { name: 'teams' }).click();
+  await page.getByPlaceholder('Platform').fill('Publishers');
+  await page.getByRole('button', { name: 'create', exact: true }).click();
+  await page.getByText('Publishers').click();
+
+  // enable sharing, grab the link
+  await page.getByRole('button', { name: 'enable sharing' }).click();
+  const link = await page.locator('.ledger-num.break-all').textContent();
+  expect(link).toContain('/share/');
+
+  // team objective so the public page has something to show
+  await page.getByRole('link', { name: 'dashboard' }).click();
+  await page.getByRole('button', { name: '+ objective' }).click();
+  await page.getByLabel(/what are you trying to change/i).fill('Publish the roadmap');
+  await page.getByLabel(/team/i).selectOption({ label: 'Publishers' });
+  await page.getByRole('button', { name: 'create', exact: true }).click();
+
+  // fresh browser context = logged out visitor
+  const anon = await browser.newContext();
+  const anonPage = await anon.newPage();
+  await anonPage.goto(link as string);
+  await expect(anonPage.getByText('Publishers · OKRs', { exact: false })).toBeVisible();
+  await expect(anonPage.getByText('Publish the roadmap')).toBeVisible();
+  await expect(anonPage.getByText('public read-only view', { exact: false })).toBeVisible();
+  await anon.close();
+});

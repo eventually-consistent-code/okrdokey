@@ -32,6 +32,7 @@ import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
 import { registerCycleRoutes } from './okr/cycles.js';
 import { registerOkrRoutes } from './okr/routes.js';
+import { registerShareRoutes } from './okr/share.js';
 import { registerSummaryRoutes } from './okr/summary.js';
 import { registerTeamRoutes } from './teams/routes.js';
 
@@ -135,6 +136,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerCheckInRoutes(api);
     registerReminderRoutes(api);
     registerSummaryRoutes(api);
+    registerShareRoutes(api);
 
     // OIDC is opt-in — no config, no routes (they 404), password auth untouched
     if (opts.oidc) {
