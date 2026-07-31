@@ -23,12 +23,14 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 
+import { registerAiKeyRoutes } from './ai/keys.js';
+import { registerAiRoutes } from './ai/routes.js';
 import { registerOidcRoutes } from './auth/oidc.js';
 import { addAuthGuard, sessionPlugin } from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
 import { registerTokenRoutes } from './auth/tokens.js';
 import { registerReminderRoutes } from './cadence/reminders.js';
-import type { OidcConfig } from './config.js';
+import type { AiConfig, OidcConfig } from './config.js';
 import { registerLinkRoutes } from './connectors/links.js';
 import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
@@ -49,6 +51,7 @@ export interface BuildAppOptions {
   oidc?: OidcConfig;
   allowedOrigins?: string[];
   webDistPath?: string;
+  ai?: AiConfig;
 }
 
 declare module 'fastify' {
@@ -60,7 +63,24 @@ declare module 'fastify' {
 // Builds the whole app — swagger, error handling, routes, db — ready to listen
 export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: process.env.NODE_ENV === 'test' ? false : { level: process.env.LOG_LEVEL ?? 'info' },
+    logger:
+      process.env.NODE_ENV === 'test'
+        ? false
+        : {
+            level: process.env.LOG_LEVEL ?? 'info',
+            // AI prompts and keys never reach the logs — redaction is
+            // instance-global in pino, so it lives here, not per-route
+            redact: {
+              paths: [
+                'req.body.context',
+                'req.body.title',
+                'req.body.key',
+                '*.apiKey',
+                '*.anthropicKey',
+              ],
+              remove: true,
+            },
+          },
     // reverse proxies terminate TLS for most self-hosts; trust their
     // x-forwarded-proto so secure:'auto' cookies come out right
     trustProxy: true,
@@ -149,6 +169,14 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerLinkRoutes(api, {
       sessionSecret: opts.sessionSecret ?? 'dev-only-secret-do-not-use-in-production!!',
     });
+    if (opts.ai?.enabled) {
+      const aiOpts = {
+        ai: opts.ai,
+        sessionSecret: opts.sessionSecret ?? 'dev-only-secret-do-not-use-in-production!!',
+      };
+      registerAiKeyRoutes(api, aiOpts);
+      registerAiRoutes(api, aiOpts);
+    }
 
     // OIDC is opt-in — no config, no routes (they 404), password auth untouched
     if (opts.oidc) {

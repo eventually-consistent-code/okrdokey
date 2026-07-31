@@ -501,3 +501,70 @@ export type PublicKpi = z.infer<typeof publicKpiSchema>;
 
 // Template library (wizard-lite) — see templates.ts
 export * from './templates.js';
+
+// AI drafting — BYO-key coach, suggestions never auto-create
+
+export const setAiKeyRequestSchema = z.object({
+  key: z.string().min(20).max(300),
+});
+
+export type SetAiKeyRequest = z.infer<typeof setAiKeyRequestSchema>;
+
+export const aiKeyResponseSchema = z.object({
+  teamId: z.string(),
+  keyLast4: z.string(),
+  createdAt: z.iso.datetime(),
+  lastUsedAt: z.iso.datetime().nullable(),
+});
+
+export type AiKeyResponse = z.infer<typeof aiKeyResponseSchema>;
+
+export const aiStatusResponseSchema = z.object({
+  enabled: z.boolean(),
+  keySource: z.enum(['team', 'instance']).nullable(),
+});
+
+export type AiStatusResponse = z.infer<typeof aiStatusResponseSchema>;
+
+// One suggested KR — same field semantics as createKeyResultRequestSchema,
+// plus the coaching rationale. Baselines are placeholder guesses.
+export const aiKrSuggestionSchema = z.object({
+  title: z.string().min(1).max(160),
+  type: krTypeSchema,
+  unit: z.string().max(16).nullable(),
+  baseline: z.number(),
+  target: z.number(),
+  rationale: z.string().max(300),
+});
+
+export type AiKrSuggestion = z.infer<typeof aiKrSuggestionSchema>;
+
+export const draftKrsRequestSchema = z.object({
+  objectiveId: z.string(),
+  context: z.string().max(2000).optional(),
+});
+
+export type DraftKrsRequest = z.infer<typeof draftKrsRequestSchema>;
+
+export const draftKrsResponseSchema = z.object({
+  suggestions: z.array(aiKrSuggestionSchema).min(2).max(3),
+});
+
+export type DraftKrsResponse = z.infer<typeof draftKrsResponseSchema>;
+
+export const improveKrRequestSchema = z.object({
+  objectiveId: z.string(),
+  title: z.string().min(1).max(160),
+  type: krTypeSchema,
+  baseline: z.number().optional(),
+  target: z.number().optional(),
+});
+
+export type ImproveKrRequest = z.infer<typeof improveKrRequestSchema>;
+
+export const improveKrResponseSchema = z.object({
+  critique: z.array(z.string()).min(1).max(5),
+  rewrite: aiKrSuggestionSchema,
+});
+
+export type ImproveKrResponse = z.infer<typeof improveKrResponseSchema>;

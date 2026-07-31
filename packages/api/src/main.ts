@@ -15,6 +15,7 @@ const app = await buildApp({
   sessionSecret: config.sessionSecret,
   oidc: config.oidc,
   allowedOrigins: config.allowedOrigins,
+  ai: config.ai,
 });
 
 try {

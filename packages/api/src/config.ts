@@ -13,6 +13,14 @@ export interface OidcConfig {
   redirectUri: string;
 }
 
+// AI drafting — BYO-key, Anthropic only. aiEnabled is the kill switch.
+export interface AiConfig {
+  enabled: boolean;
+  model: string;
+  instanceKey: string | null;
+  baseUrl: string | null; // test/mock override; null = Anthropic default
+}
+
 export interface AppConfig {
   port: number;
   host: string;
@@ -20,6 +28,7 @@ export interface AppConfig {
   sessionSecret: string;
   oidc?: OidcConfig;
   allowedOrigins: string[];
+  ai: AiConfig;
 }
 
 // OIDC is opt-in: all three core vars present → configured; all absent →
@@ -64,5 +73,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
+    ai: {
+      enabled: env.AI_FEATURES !== 'off',
+      model: env.AI_MODEL ?? 'claude-opus-4-8',
+      instanceKey: env.ANTHROPIC_API_KEY ?? null,
+      baseUrl: env.ANTHROPIC_BASE_URL_OVERRIDE ?? null,
+    },
   };
 }

@@ -215,6 +215,33 @@ export const shareTokens = sqliteTable('share_tokens', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// Team AI keys — BYO Anthropic key, encrypted like connector credentials.
+// One per team; instance env key is the fallback.
+export const teamAiKeys = sqliteTable('team_ai_keys', {
+  teamId: text('team_id')
+    .primaryKey()
+    .references(() => teams.id),
+  keyCiphertext: text('key_ciphertext').notNull(),
+  keyLast4: text('key_last4').notNull(),
+  createdByUserId: text('created_by_user_id')
+    .notNull()
+    .references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+});
+
+// AI rate counters — fixed hourly windows; stale rows pruned on write
+export const aiRateCounters = sqliteTable(
+  'ai_rate_counters',
+  {
+    scope: text('scope', { enum: ['user', 'team'] }).notNull(),
+    scopeId: text('scope_id').notNull(),
+    windowStart: integer('window_start', { mode: 'timestamp' }).notNull(),
+    count: integer('count', { mode: 'number' }).notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.scope, t.scopeId, t.windowStart] })],
+);
+
 // Webhook deliveries — attempt log with a dead-letter flag
 export const webhookDeliveries = sqliteTable('webhook_deliveries', {
   id: text('id').primaryKey(),
