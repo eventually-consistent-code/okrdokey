@@ -4,6 +4,9 @@
  * Author(s): John Reed
  */
 
+import { jiraAdapter } from './jira.js';
 import type { AdapterRegistry } from './types.js';
 
-export const adapters: AdapterRegistry = {};
+export const adapters: AdapterRegistry = {
+  jira: jiraAdapter,
+};
