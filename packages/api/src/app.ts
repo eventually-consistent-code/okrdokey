@@ -20,8 +20,10 @@ import {
 import { registerOidcRoutes } from './auth/oidc.js';
 import authPlugin from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
+import { registerReminderRoutes } from './cadence/reminders.js';
 import type { OidcConfig } from './config.js';
 import { createDb, type Db } from './db/index.js';
+import { registerCheckInRoutes } from './okr/check-ins.js';
 import { registerCycleRoutes } from './okr/cycles.js';
 import { registerOkrRoutes } from './okr/routes.js';
 import { registerTeamRoutes } from './teams/routes.js';
@@ -116,6 +118,8 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   registerTeamRoutes(app);
   registerCycleRoutes(app);
   registerOkrRoutes(app);
+  registerCheckInRoutes(app);
+  registerReminderRoutes(app);
 
   // OIDC is opt-in — no config, no routes (they 404), password auth untouched
   if (opts.oidc) {

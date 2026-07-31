@@ -206,3 +206,50 @@ export const listObjectivesQuerySchema = z.object({
 });
 
 export type ListObjectivesQuery = z.infer<typeof listObjectivesQuerySchema>;
+
+// Check-ins
+
+export const createCheckInRequestSchema = z.object({
+  value: z.number(),
+  confidence: confidenceSchema,
+  note: z.string().max(1000).optional(),
+});
+
+export type CreateCheckInRequest = z.infer<typeof createCheckInRequestSchema>;
+
+export const checkInResponseSchema = z.object({
+  id: z.string(),
+  keyResultId: z.string(),
+  value: z.number(),
+  confidence: confidenceSchema,
+  note: z.string().nullable(),
+  authorUserId: z.string(),
+  createdAt: z.iso.datetime(),
+});
+
+export type CheckInResponse = z.infer<typeof checkInResponseSchema>;
+
+// Reminders
+
+export const upsertReminderRequestSchema = z.object({
+  teamId: z.string().optional(), // absent → personal reminder
+  cronExpr: z.string().min(1).max(120),
+  timezone: z.string().min(1).max(64).default('UTC'),
+  webhookUrl: z.url().optional(),
+  enabled: z.boolean().default(true),
+});
+
+export type UpsertReminderRequest = z.infer<typeof upsertReminderRequestSchema>;
+
+export const reminderResponseSchema = z.object({
+  id: z.string(),
+  teamId: z.string().nullable(),
+  userId: z.string().nullable(),
+  cronExpr: z.string(),
+  timezone: z.string(),
+  webhookUrl: z.string().nullable(),
+  enabled: z.boolean(),
+  nextDueAt: z.iso.datetime(),
+});
+
+export type ReminderResponse = z.infer<typeof reminderResponseSchema>;

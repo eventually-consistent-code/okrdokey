@@ -4,6 +4,7 @@
  */
 
 import { buildApp } from './app.js';
+import { startScheduler } from './cadence/engine.js';
 import { loadConfig } from './config.js';
 
 // Main
@@ -17,6 +18,7 @@ const app = await buildApp({
 
 try {
   await app.listen({ port: config.port, host: config.host });
+  startScheduler(app);
   app.log.info(`docs live at http://localhost:${config.port}/docs`);
 } catch (err) {
   app.log.error(err);
