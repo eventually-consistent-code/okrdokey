@@ -61,15 +61,15 @@
       "title": "REQ-09: GitHub connector — KR bound to issue/milestone progress",
       "bodyHash": "88a7cb8894c6d625",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:17Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T08:44:58Z"
     },
     "10": {
       "title": "REQ-10: Jira connector — KR bound to JQL/epic progress",
       "bodyHash": "7fbf0d305ebf666f",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:20Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T08:44:59Z"
     },
     "11": {
       "title": "REQ-11: One-command deploy — docker compose up",
