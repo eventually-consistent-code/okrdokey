@@ -35,6 +35,9 @@ updates…
 - **Auto-updating KRs** — push values from scripts/CI with `okr_…` API
   tokens, or link a KR to a GitHub milestone / Jira JQL count and let the
   sync loop move the number as work closes.
+- **Trends & history** — score-over-time charts and RAG-colored trend
+  lines rebuilt from your check-in history (no extra data entry), mini
+  trends on the dashboard, cycle-over-cycle comparison.
 - **KPIs beside OKRs** — steady-state metrics (uptime, NPS, MRR) with
   target bands and computed health, so "keep it green" numbers don't
   masquerade as objectives.
