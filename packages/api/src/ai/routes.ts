@@ -35,9 +35,17 @@ const TIMEOUT_MS = 60_000;
 // The wrapper object structured outputs require (array roots unsupported)
 const draftWrapperSchema = z.object({ suggestions: z.array(aiKrSuggestionSchema) });
 const improveWrapperSchema = z.object({
-  critique: z.array(z.string()),
+  critique: z.array(z.string()).min(1).max(5),
   rewrite: aiKrSuggestionSchema,
 });
+
+// Parse failures (malformed/truncated model JSON, schema mismatch) throw
+// AnthropicError — the BASE class of APIError, not a subclass. Those are
+// invalid output, not upstream failures: they count as zero suggestions so
+// the retry covers them. Real API errors (401/429/529) propagate.
+function isInvalidOutputError(err: unknown): boolean {
+  return err instanceof Anthropic.AnthropicError && !(err instanceof Anthropic.APIError);
+}
 
 const COACH_RULES = `You are an OKR coach inside OKRdokey. The one lesson you enforce: a key result is a NUMBER THAT CHANGES, not a task you finish.
 
@@ -197,14 +205,19 @@ export function registerAiRoutes(app: FastifyInstance, opts: AiRouteOptions): vo
       }\n\nSuggest exactly 3 measurable key results for this objective.`;
 
       const attempt = async (): Promise<z.infer<typeof aiKrSuggestionSchema>[]> => {
-        const response = await client.beta.messages.parse({
-          model: opts.ai.model,
-          max_tokens: MAX_TOKENS,
-          system: COACH_RULES,
-          messages: [{ role: 'user', content: prompt }],
-          output_format: zodOutputFormat(draftWrapperSchema),
-        });
-        return validSuggestions(response.parsed_output?.suggestions ?? []);
+        try {
+          const response = await client.beta.messages.parse({
+            model: opts.ai.model,
+            max_tokens: MAX_TOKENS,
+            system: COACH_RULES,
+            messages: [{ role: 'user', content: prompt }],
+            output_format: zodOutputFormat(draftWrapperSchema),
+          });
+          return validSuggestions(response.parsed_output?.suggestions ?? []);
+        } catch (err) {
+          if (isInvalidOutputError(err)) return [];
+          throw err;
+        }
       };
 
       try {
@@ -268,22 +281,30 @@ export function registerAiRoutes(app: FastifyInstance, opts: AiRouteOptions): vo
 
       const client = buildClient(opts.ai, resolved.key);
       const draft = `${req.body.title} (type ${req.body.type}${
-        req.body.baseline !== undefined ? `, ${req.body.baseline}→${req.body.target}` : ''
+        req.body.baseline !== undefined && req.body.target !== undefined
+          ? `, ${req.body.baseline}→${req.body.target}`
+          : ''
       })`;
       try {
-        const response = await client.beta.messages.parse({
-          model: opts.ai.model,
-          max_tokens: MAX_TOKENS,
-          system: COACH_RULES,
-          messages: [
-            {
-              role: 'user',
-              content: `${objectiveContext(app, obj)}\n\nThe user drafted this key result:\n${draft}\n\nCritique it against the checklist (1–5 short bullets) and provide ONE improved rewrite.`,
-            },
-          ],
-          output_format: zodOutputFormat(improveWrapperSchema),
-        });
-        const parsed = response.parsed_output;
+        let parsed: z.infer<typeof improveWrapperSchema> | null;
+        try {
+          const response = await client.beta.messages.parse({
+            model: opts.ai.model,
+            max_tokens: MAX_TOKENS,
+            system: COACH_RULES,
+            messages: [
+              {
+                role: 'user',
+                content: `${objectiveContext(app, obj)}\n\nThe user drafted this key result:\n${draft}\n\nCritique it against the checklist (1–5 short bullets) and provide ONE improved rewrite.`,
+              },
+            ],
+            output_format: zodOutputFormat(improveWrapperSchema),
+          });
+          parsed = response.parsed_output;
+        } catch (err) {
+          if (!isInvalidOutputError(err)) throw err;
+          parsed = null;
+        }
         if (!parsed || validSuggestions([parsed.rewrite]).length === 0) {
           return reply.status(502).send({
             statusCode: 502,

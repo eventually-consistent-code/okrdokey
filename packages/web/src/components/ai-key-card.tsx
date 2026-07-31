@@ -19,8 +19,9 @@ export function AiKeyCard({ teamId }: { teamId: string }): ReactNode {
   const revoke = useDeleteTeamAiKey(teamId);
   const [key, setKey] = useState('');
 
-  // feature off entirely (routes not registered) — no panel at all
-  if (status.data === null || status.isLoading) return null;
+  // feature off (routes not registered), still loading, or status errored —
+  // no panel unless we positively know the feature is on
+  if (!status.data) return null;
 
   const row = current.data;
   const err = save.error ?? revoke.error;

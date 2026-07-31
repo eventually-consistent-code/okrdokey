@@ -20,7 +20,9 @@ const BAD_KEY = 'sk-ant-test-bad-key-bbbbbbbbbbbbb';
 let mock: FastifyInstance;
 let mockUrl: string;
 // mutable mock behavior per test
-let mockMode: 'ok' | 'tasks' | 'auth-error' | 'overloaded' = 'ok';
+let mockMode: 'ok' | 'tasks' | 'auth-error' | 'overloaded' | 'rate-limited' | 'garbage' | 'empty-critique' = 'ok';
+// counts POST /v1/messages hits — lets tests assert the retry actually fired
+let messagesHits = 0;
 
 const GOOD_SUGGESTIONS = {
   suggestions: [
@@ -39,6 +41,18 @@ const BAD_SUGGESTIONS = {
     { title: 'Grow signups from 0 to 50', type: 'numeric', unit: null, baseline: 0, target: 50, rationale: 'ok' },
   ],
 };
+
+function structuredResponse2(rawText: string): unknown {
+  return {
+    id: 'msg_mock',
+    type: 'message',
+    role: 'assistant',
+    model: 'claude-opus-4-8',
+    content: [{ type: 'text', text: rawText }],
+    stop_reason: 'max_tokens',
+    usage: { input_tokens: 100, output_tokens: 1024 },
+  };
+}
 
 function structuredResponse(payload: unknown): unknown {
   return {
@@ -60,12 +74,26 @@ beforeAll(async () => {
     return reply.status(401).send({ type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } });
   });
   mock.post('/v1/messages', async (req, reply) => {
+    messagesHits += 1;
     const key = req.headers['x-api-key'];
     if (mockMode === 'auth-error' || key !== GOOD_KEY) {
       return reply.status(401).send({ type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } });
     }
     if (mockMode === 'overloaded') {
       return reply.status(529).send({ type: 'error', error: { type: 'overloaded_error', message: 'overloaded' } });
+    }
+    // no retry-after header — the SDK honors it literally and would sleep 60s
+    if (mockMode === 'rate-limited') {
+      return reply
+        .status(429)
+        .send({ type: 'error', error: { type: 'rate_limit_error', message: 'rate limited' } });
+    }
+    // truncated/malformed JSON — the parse-throws class of invalid output
+    if (mockMode === 'garbage') {
+      return structuredResponse2('{"suggestions": [{"title": "Grow');
+    }
+    if (mockMode === 'empty-critique') {
+      return structuredResponse({ critique: [], rewrite: GOOD_SUGGESTIONS.suggestions[0] });
     }
     if (mockMode === 'tasks') return structuredResponse(BAD_SUGGESTIONS);
     // improve-kr prompts contain "Critique it" — answer with the feedback shape
@@ -154,6 +182,7 @@ async function makeApp(instanceKey: string | null): Promise<Ctx> {
 
 beforeEach(() => {
   mockMode = 'ok';
+  messagesHits = 0;
 });
 
 describe('key lifecycle (admin only)', () => {
@@ -275,7 +304,7 @@ describe('status + drafting', () => {
     expect(res.statusCode).toBe(200);
   });
 
-  it('mostly-invalid model output retries then 502s', async () => {
+  it('mostly-invalid model output retries exactly once then 502s', async () => {
     mockMode = 'tasks';
     const res = await ctx.app.inject({
       method: 'POST',
@@ -285,6 +314,80 @@ describe('status + drafting', () => {
     });
     expect(res.statusCode).toBe(502);
     expect(res.json<{ message: string }>().message).toMatch(/could not produce/);
+    expect(messagesHits).toBe(2); // the retry actually fired
+  });
+
+  it('malformed/truncated model JSON also gets the one retry then 502', async () => {
+    mockMode = 'garbage';
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: ctx.teamObjectiveId },
+      headers: { cookie: ctx.member },
+    });
+    expect(res.statusCode).toBe(502);
+    expect(res.json<{ message: string }>().message).toMatch(/could not produce/);
+    expect(messagesHits).toBe(2);
+  });
+
+  it('upstream 529 overloaded maps to plain language', async () => {
+    mockMode = 'overloaded';
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: ctx.teamObjectiveId },
+      headers: { cookie: ctx.member },
+    });
+    expect(res.statusCode).toBe(502);
+    expect(res.json<{ message: string }>().message).toMatch(/unavailable right now/);
+  });
+
+  it('upstream 429 maps to plain language', async () => {
+    mockMode = 'rate-limited';
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: ctx.teamObjectiveId },
+      headers: { cookie: ctx.member },
+    });
+    expect(res.statusCode).toBe(502);
+    expect(res.json<{ message: string }>().message).toMatch(/rate limit/);
+  });
+
+  it('empty critique from the model is invalid output, not a 500', async () => {
+    mockMode = 'empty-critique';
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/improve-kr',
+      payload: { objectiveId: ctx.teamObjectiveId, title: 'Launch newsletter', type: 'numeric' },
+      headers: { cookie: ctx.member },
+    });
+    expect(res.statusCode).toBe(502);
+    expect(res.json<{ message: string }>().message).toMatch(/usable feedback/);
+  });
+
+  it('non-member gets 404 on team objective; member gets 404 on another user\'s personal objective', async () => {
+    const outsider = await ctx.app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: { email: 'x@x.com', password: 'correct-horse-battery', displayName: 'x' },
+    });
+    const cookie = String(outsider.headers['set-cookie']).split(';')[0] ?? '';
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: ctx.teamObjectiveId },
+      headers: { cookie },
+    });
+    expect(res.statusCode).toBe(404);
+
+    const personal = await ctx.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: ctx.personalObjectiveId },
+      headers: { cookie: ctx.member },
+    });
+    expect(personal.statusCode).toBe(404);
   });
 
   it('upstream auth error maps to plain language', async () => {
@@ -312,7 +415,7 @@ describe('status + drafting', () => {
     expect(body.rewrite.title).toMatch(/weekly active users/i);
   });
 
-  it('no key anywhere → 409 with settings hint', async () => {
+  it('no key anywhere → 409 with settings hint on both endpoints; status says enabled:false', async () => {
     const bare = await makeApp(null);
     const res = await bare.app.inject({
       method: 'POST',
@@ -322,10 +425,39 @@ describe('status + drafting', () => {
     });
     expect(res.statusCode).toBe(409);
     expect(res.json<{ message: string }>().message).toMatch(/Team Settings/);
+
+    const improve = await bare.app.inject({
+      method: 'POST',
+      url: '/ai/improve-kr',
+      payload: { objectiveId: bare.teamObjectiveId, title: 'Launch newsletter', type: 'numeric' },
+      headers: { cookie: bare.admin },
+    });
+    expect(improve.statusCode).toBe(409);
+
+    const status = await bare.app.inject({
+      method: 'GET',
+      url: '/ai/status',
+      headers: { cookie: bare.admin },
+    });
+    expect(status.json()).toEqual({ enabled: false, keySource: null });
     await bare.app.close();
   });
 
-  it('user rate limit exhausts at 10/hour', async () => {
+  it('AI_FEATURES=off leaves no AI routes at all', async () => {
+    const off = await buildApp({ dbPath: ':memory:', sessionSecret: SECRET });
+    await off.ready();
+    const signup = await off.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: { email: 'off@x.com', password: 'correct-horse-battery', displayName: 'off' },
+    });
+    const cookie = String(signup.headers['set-cookie']).split(';')[0] ?? '';
+    const res = await off.inject({ method: 'GET', url: '/ai/status', headers: { cookie } });
+    expect(res.statusCode).toBe(404);
+    await off.close();
+  });
+
+  it('user rate limit exhausts at 10/hour and also blocks improve-kr', async () => {
     const fresh = await makeApp(GOOD_KEY);
     let last = 0;
     for (let i = 0; i < 11; i += 1) {
@@ -338,6 +470,63 @@ describe('status + drafting', () => {
       last = res.statusCode;
     }
     expect(last).toBe(429);
+
+    const improve = await fresh.app.inject({
+      method: 'POST',
+      url: '/ai/improve-kr',
+      payload: { objectiveId: fresh.teamObjectiveId, title: 'Launch newsletter', type: 'numeric' },
+      headers: { cookie: fresh.admin },
+    });
+    expect(improve.statusCode).toBe(429);
+    await fresh.app.close();
+  });
+
+  it('team rate limit exhausts at 30/hour across users', async () => {
+    const fresh = await makeApp(GOOD_KEY);
+    // three more members, 10 drafts each = 30 team-scope consumptions
+    const cookies: string[] = [];
+    for (const email of ['t1@x.com', 't2@x.com', 't3@x.com']) {
+      const signup = await fresh.app.inject({
+        method: 'POST',
+        url: '/auth/signup',
+        payload: { email, password: 'correct-horse-battery', displayName: email },
+      });
+      cookies.push(String(signup.headers['set-cookie']).split(';')[0] ?? '');
+      await fresh.app.inject({
+        method: 'POST',
+        url: `/teams/${fresh.teamId}/members`,
+        payload: { email, role: 'member' },
+        headers: { cookie: fresh.admin },
+      });
+    }
+    for (const cookie of cookies) {
+      for (let i = 0; i < 10; i += 1) {
+        const res = await fresh.app.inject({
+          method: 'POST',
+          url: '/ai/draft-krs',
+          payload: { objectiveId: fresh.teamObjectiveId },
+          headers: { cookie },
+        });
+        expect(res.statusCode).toBe(200);
+      }
+    }
+    // admin has spent nothing user-scope — the team budget is what blocks
+    const blocked = await fresh.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: fresh.teamObjectiveId },
+      headers: { cookie: fresh.admin },
+    });
+    expect(blocked.statusCode).toBe(429);
+
+    // personal objectives skip the team scope — admin can still draft there
+    const personal = await fresh.app.inject({
+      method: 'POST',
+      url: '/ai/draft-krs',
+      payload: { objectiveId: fresh.personalObjectiveId },
+      headers: { cookie: fresh.admin },
+    });
+    expect(personal.statusCode).toBe(200);
     await fresh.app.close();
   });
 });
