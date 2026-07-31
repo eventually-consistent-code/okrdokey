@@ -15,6 +15,13 @@
       "when": 1785473108644,
       "tag": "0001_moaning_thunderbolt_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785473478145,
+      "tag": "0002_puzzling_chameleon",
+      "breakpoints": true
     }
   ]
 }

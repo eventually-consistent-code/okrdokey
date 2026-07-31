@@ -17,8 +17,10 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 
+import { registerOidcRoutes } from './auth/oidc.js';
 import authPlugin from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
+import type { OidcConfig } from './config.js';
 import { createDb, type Db } from './db/index.js';
 
 const API_VERSION = '0.1.0';
@@ -26,6 +28,7 @@ const API_VERSION = '0.1.0';
 export interface BuildAppOptions {
   dbPath: string;
   sessionSecret?: string;
+  oidc?: OidcConfig;
 }
 
 declare module 'fastify' {
@@ -37,8 +40,7 @@ declare module 'fastify' {
 // Builds the whole app — swagger, error handling, routes, db — ready to listen
 export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
-    logger:
-      process.env.NODE_ENV === 'test' ? false : { level: process.env.LOG_LEVEL ?? 'info' },
+    logger: process.env.NODE_ENV === 'test' ? false : { level: process.env.LOG_LEVEL ?? 'info' },
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
@@ -108,6 +110,11 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   });
 
   registerAuthRoutes(app);
+
+  // OIDC is opt-in — no config, no routes (they 404), password auth untouched
+  if (opts.oidc) {
+    registerOidcRoutes(app, opts.oidc);
+  }
 
   return app;
 }
