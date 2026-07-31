@@ -108,6 +108,22 @@ test('team share link serves a public read-only dashboard', async ({ page, brows
   await page.getByLabel(/team/i).selectOption({ label: 'Publishers' });
   await page.getByRole('button', { name: 'create', exact: true }).click();
 
+  // a KR with two check-ins so the public page has a trend to draw
+  await page.getByText('Publish the roadmap').click();
+  await page.getByRole('button', { name: '+ key result' }).click();
+  await page.getByLabel('Title').fill('Docs published 0 → 10');
+  await page.getByLabel('Baseline').fill('0');
+  await page.getByLabel('Target').fill('10');
+  await page.getByRole('button', { name: 'add', exact: true }).click();
+  await expect(page.getByText('Docs published 0 → 10')).toBeVisible();
+  for (const v of ['3', '6']) {
+    await page.getByRole('button', { name: 'check in' }).click();
+    await page.getByLabel(/current value/i).fill(v);
+    await page.getByRole('radio', { name: 'on it' }).click();
+    await page.getByRole('button', { name: 'save check-in' }).click();
+    await expect(page.getByText(v, { exact: false }).first()).toBeVisible();
+  }
+
   // KPI: create, record a reading, watch health render
   await page.getByRole('link', { name: 'teams' }).click();
   await page.getByText('Publishers').click();
@@ -130,5 +146,7 @@ test('team share link serves a public read-only dashboard', async ({ page, brows
   await expect(anonPage.getByText('public read-only view', { exact: false })).toBeVisible();
   // KPI strip made it to the public page
   await expect(anonPage.getByText('Uptime').first()).toBeVisible();
+  // KR trend sparkline renders publicly (values only)
+  await expect(anonPage.getByRole('img', { name: 'check-in trend' }).first()).toBeVisible();
   await anon.close();
 });
