@@ -24,6 +24,11 @@ const API_PREFIXES = [
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // one 497KiB chunk = 148KiB gzip — react + router + query baseline, no
+    // outlier dep to split, and manualChunks is deprecated under rolldown
+    chunkSizeWarningLimit: 600,
+  },
   server: {
     proxy: Object.fromEntries(API_PREFIXES.map((p) => [p, { target: API, changeOrigin: false }])),
   },
