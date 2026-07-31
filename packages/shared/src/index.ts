@@ -311,6 +311,87 @@ export const cycleSummaryResponseSchema = z.object({
 
 export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
 
+// Data in / data out
+
+export const IMPORT_COLUMNS = [
+  'objective_title',
+  'objective_description',
+  'team_name',
+  'cycle_name',
+  'kr_title',
+  'kr_type',
+  'kr_unit',
+  'kr_baseline',
+  'kr_target',
+] as const;
+
+export const importRequestSchema = z.object({
+  csv: z.string().min(1).max(1_000_000),
+});
+
+export type ImportRequest = z.infer<typeof importRequestSchema>;
+
+export const importResponseSchema = z.object({
+  dryRun: z.boolean(),
+  creates: z.object({ objectives: z.number(), keyResults: z.number() }),
+  preview: z.array(
+    z.object({
+      title: z.string(),
+      teamName: z.string().nullable(),
+      cycleName: z.string(),
+      keyResults: z.number(),
+    }),
+  ),
+  errors: z.array(z.object({ line: z.number(), message: z.string() })),
+});
+
+export type ImportResponse = z.infer<typeof importResponseSchema>;
+
+export const exportCheckInSchema = z.object({
+  value: z.number(),
+  confidence: confidenceSchema,
+  note: z.string().nullable(),
+  source: z.enum(['ui', 'api', 'github', 'jira']),
+  createdAt: z.iso.datetime(),
+});
+
+export const exportKeyResultSchema = z.object({
+  title: z.string(),
+  type: krTypeSchema,
+  unit: z.string().nullable(),
+  baseline: z.number(),
+  target: z.number(),
+  currentValue: z.number(),
+  currentConfidence: confidenceSchema.nullable(),
+  checkIns: z.array(exportCheckInSchema),
+});
+
+export const exportObjectiveSchema = z.object({
+  title: z.string(),
+  description: z.string().nullable(),
+  teamName: z.string().nullable(),
+  cycleName: z.string(),
+  archivedAt: z.iso.datetime().nullable(),
+  keyResults: z.array(exportKeyResultSchema),
+});
+
+export const exportKpiSchema = z.object({
+  name: z.string(),
+  unit: z.string().nullable(),
+  teamName: z.string(),
+  currentValue: z.number(),
+  readings: z.array(z.object({ value: z.number(), createdAt: z.iso.datetime() })),
+});
+
+export const exportResponseSchema = z.object({
+  exportedAt: z.iso.datetime(),
+  cycles: z.array(cycleResponseSchema),
+  objectives: z.array(exportObjectiveSchema),
+  kpis: z.array(exportKpiSchema),
+});
+
+export type ExportResponse = z.infer<typeof exportResponseSchema>;
+
 // Cycle lifecycle — close + rollover
 
 export const rolloverRequestSchema = z.object({

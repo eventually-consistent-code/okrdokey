@@ -41,7 +41,6 @@ export function registerLifecycleRoutes(app: FastifyInstance): void {
         409: errorResponseSchema,
       },
     },
-    // eslint-disable-next-line @typescript-eslint/require-await -- reply-branching handlers must be async for the type provider
     handler: async (req, reply) => {
       const cycle = app.db.select().from(cycles).where(eq(cycles.id, req.params.cycleId)).get();
       if (!cycle) {
@@ -71,7 +70,6 @@ export function registerLifecycleRoutes(app: FastifyInstance): void {
       body: rolloverRequestSchema,
       response: { 200: rolloverResponseSchema, 404: errorResponseSchema, 409: errorResponseSchema },
     },
-    // eslint-disable-next-line @typescript-eslint/require-await -- reply-branching handlers must be async for the type provider
     handler: async (req, reply) => {
       const user = req.user as { id: string };
       const source = app.db.select().from(cycles).where(eq(cycles.id, req.params.cycleId)).get();
