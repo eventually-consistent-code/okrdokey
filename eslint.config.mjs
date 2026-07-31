@@ -23,7 +23,7 @@ export default tseslint.config(
   },
   {
     // Config files at the root aren't part of a TS project
-    files: ['*.mjs', '*.js'],
+    files: ['*.mjs', '*.js', '*.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
 );
