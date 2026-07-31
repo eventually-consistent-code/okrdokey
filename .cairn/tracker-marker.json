@@ -33,15 +33,15 @@
       "title": "REQ-02: Check-in cadence engine — reminders, confidence, history",
       "bodyHash": "8289eff668d52b5e",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:38Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T05:30:30Z"
     },
     "6": {
       "title": "REQ-03: Scoring and status roll-up per cycle",
       "bodyHash": "4cea71457eb9eb6a",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-30T08:26:59Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T05:30:31Z"
     },
     "7": {
       "title": "REQ-06: Web UI covering all flows",
