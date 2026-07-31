@@ -14,12 +14,21 @@ import {
   shareTokenResponseSchema,
   type PublicSummaryResponse,
 } from '@okrdokey/shared';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql as rawSql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
-import { cycles, keyResults, objectives, shareTokens, teamMembers, teams } from '../db/schema.js';
+import {
+  cycles,
+  keyResults,
+  kpiReadings,
+  kpis,
+  objectives,
+  shareTokens,
+  teamMembers,
+  teams,
+} from '../db/schema.js';
 import {
   cycleElapsedFraction,
   krScore,
@@ -179,8 +188,34 @@ export function registerShareRoutes(app: FastifyInstance): void {
         byCycle.set(o.cycleId, [...(byCycle.get(o.cycleId) ?? []), o]);
       }
 
+      // KPI strip — current state + a short trend, nothing else
+      const teamKpis = app.db
+        .select()
+        .from(kpis)
+        .where(and(eq(kpis.teamId, share.teamId), isNull(kpis.archivedAt)))
+        .all()
+        .map((k) => {
+          const trend = app.db
+            .select({ value: kpiReadings.value })
+            .from(kpiReadings)
+            .where(eq(kpiReadings.kpiId, k.id))
+            .orderBy(desc(kpiReadings.createdAt), desc(rawSql`rowid`))
+            .limit(12)
+            .all()
+            .map((r) => r.value)
+            .reverse();
+          return {
+            name: k.name,
+            unit: k.unit,
+            currentValue: k.currentValue,
+            currentHealth: k.currentHealth,
+            trend,
+          };
+        });
+
       const summary: PublicSummaryResponse = {
         teamName: team.name,
+        kpis: teamKpis,
         cycles: [...byCycle.entries()].flatMap(([cycleId, objs]) => {
           const cycle = app.db.select().from(cycles).where(eq(cycles.id, cycleId)).get();
           if (!cycle) return [];

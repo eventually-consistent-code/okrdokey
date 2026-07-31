@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 
 import { apiFetch } from '../api.js';
 import { Card, RagDot, Score, StatusStamp } from '../components/bits.js';
+import { KpiStrip } from '../components/kpi-strip.js';
 
 export function SharePage(): ReactNode {
   const { token } = useParams({ from: '/share/$token' });
@@ -42,6 +43,13 @@ export function SharePage(): ReactNode {
           public read-only view — powered by OKRdokey<span className="text-ember">.</span>
         </p>
       </header>
+
+      {s.kpis.length > 0 ? (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold">KPIs</h2>
+          <KpiStrip items={s.kpis} />
+        </section>
+      ) : null}
 
       {s.cycles.length === 0 ? (
         <p className="text-sm text-ink-soft">nothing published yet…</p>

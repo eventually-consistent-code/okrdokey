@@ -11,6 +11,8 @@ import {
   cycleResponseSchema,
   cycleSummaryResponseSchema,
   keyResultResponseSchema,
+  kpiReadingResponseSchema,
+  kpiResponseSchema,
   krLinkResponseSchema,
   objectiveResponseSchema,
   reminderResponseSchema,
@@ -19,6 +21,8 @@ import {
   upsertKrLinkRequestSchema,
   userResponseSchema,
   type CreateCheckInRequest,
+  type CreateKpiReadingRequest,
+  type CreateKpiRequest,
   type CreateKeyResultRequest,
   type CreateObjectiveRequest,
   type UpsertKrLinkRequest,
@@ -196,5 +200,57 @@ export function useDeleteKrLink(krId: string) {
   return useMutation({
     mutationFn: () => apiFetch(`/key-results/${krId}/link`, z.null(), { method: 'DELETE' }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['kr-link', krId] }),
+  });
+}
+
+// KPIs — cycle-less team stability metrics
+
+export function useKpis(teamId: string) {
+  return useQuery({
+    queryKey: ['kpis', teamId],
+    queryFn: () => apiFetch(`/teams/${teamId}/kpis`, z.array(kpiResponseSchema)),
+  });
+}
+
+export function useKpiReadings(kpiId: string) {
+  return useQuery({
+    queryKey: ['kpi-readings', kpiId],
+    queryFn: () => apiFetch(`/kpis/${kpiId}/readings`, z.array(kpiReadingResponseSchema)),
+  });
+}
+
+export function useCreateKpi(teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateKpiRequest) =>
+      apiFetch(`/teams/${teamId}/kpis`, kpiResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['kpis', teamId] }),
+  });
+}
+
+export function useRecordKpiReading(kpiId: string, teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateKpiReadingRequest) =>
+      apiFetch(`/kpis/${kpiId}/readings`, kpiReadingResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['kpis', teamId] });
+      void qc.invalidateQueries({ queryKey: ['kpi-readings', kpiId] });
+    },
+  });
+}
+
+export function useArchiveKpi(teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (kpiId: string) =>
+      apiFetch(`/kpis/${kpiId}/archive`, kpiResponseSchema, { method: 'POST' }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['kpis', teamId] }),
   });
 }

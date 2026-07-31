@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { apiFetch, ApiError } from '../api.js';
 import { Button, Card } from '../components/bits.js';
 import { ReminderForm } from '../components/reminder-form.js';
+import { KpiPanel } from '../components/kpi-panel.js';
 import { ShareCard } from '../components/share-card.js';
 import { useMe, useTeam, useTeams } from '../queries.js';
 
@@ -184,6 +185,7 @@ export function TeamPage(): ReactNode {
         ) : null}
       </Card>
 
+      <KpiPanel teamId={t.id} isAdmin={isAdmin} />
       {isAdmin ? <ReminderForm teamId={t.id} /> : null}
       {isAdmin ? <ShareCard teamId={t.id} /> : null}
     </div>

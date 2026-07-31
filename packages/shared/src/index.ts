@@ -339,6 +339,7 @@ export const publicObjectiveSchema = z.object({
 
 export const publicSummaryResponseSchema = z.object({
   teamName: z.string(),
+  kpis: z.array(z.lazy(() => publicKpiSchema)).default([]),
   cycles: z.array(
     z.object({
       cycle: cycleResponseSchema.pick({ name: true, startsOn: true, endsOn: true }),
@@ -486,3 +487,14 @@ export const kpiReadingResponseSchema = z.object({
 });
 
 export type KpiReadingResponse = z.infer<typeof kpiReadingResponseSchema>;
+
+// Public KPI strip — same no-leak stance as the rest of the share payload
+export const publicKpiSchema = z.object({
+  name: z.string(),
+  unit: z.string().nullable(),
+  currentValue: z.number(),
+  currentHealth: kpiHealthSchema.nullable(),
+  trend: z.array(z.number()), // oldest-first, last 12 readings
+});
+
+export type PublicKpi = z.infer<typeof publicKpiSchema>;
