@@ -22,6 +22,14 @@ import { z } from 'zod';
 
 import { cycles, keyResults, objectives, teamMembers } from '../db/schema.js';
 import { accessibleObjective, isTeamMember, type ObjectiveRow } from './access.js';
+import {
+  cycleElapsedFraction,
+  krScore,
+  objectiveScore,
+  objectiveStatus,
+  round2,
+  worstConfidence,
+} from './scoring.js';
 
 type KrRow = typeof keyResults.$inferSelect;
 
@@ -36,6 +44,7 @@ function krToResponse(kr: KrRow): z.infer<typeof keyResultResponseSchema> {
     target: kr.target,
     currentValue: kr.currentValue,
     currentConfidence: kr.currentConfidence,
+    score: round2(krScore(kr)),
   };
 }
 
@@ -44,6 +53,17 @@ function objToResponse(
   obj: ObjectiveRow,
 ): z.infer<typeof objectiveResponseSchema> {
   const krs = app.db.select().from(keyResults).where(eq(keyResults.objectiveId, obj.id)).all();
+
+  // Score + status ride along on every objective response — raw score feeds
+  // the status math, the 2dp rounding is presentation only
+  const cycle = app.db.select().from(cycles).where(eq(cycles.id, obj.cycleId)).get();
+  const score = objectiveScore(krs.map((kr) => krScore(kr)));
+  const status = objectiveStatus(
+    score,
+    cycle ? cycleElapsedFraction(cycle, new Date()) : 1,
+    worstConfidence(krs.map((kr) => kr.currentConfidence)),
+  );
+
   return {
     id: obj.id,
     title: obj.title,
@@ -53,6 +73,8 @@ function objToResponse(
     cycleId: obj.cycleId,
     archivedAt: obj.archivedAt ? obj.archivedAt.toISOString() : null,
     createdAt: obj.createdAt.toISOString(),
+    score: round2(score),
+    status,
     keyResults: krs.map(krToResponse),
   };
 }

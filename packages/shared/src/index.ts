@@ -155,6 +155,7 @@ export const keyResultResponseSchema = z.object({
   target: z.number(),
   currentValue: z.number(),
   currentConfidence: confidenceSchema.nullable(),
+  score: z.number(),
 });
 
 export type KeyResultResponse = z.infer<typeof keyResultResponseSchema>;
@@ -187,6 +188,8 @@ export const objectiveResponseSchema = z.object({
   cycleId: z.string(),
   archivedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
+  score: z.number(),
+  status: z.enum(['on-track', 'at-risk', 'behind']),
   keyResults: z.array(keyResultResponseSchema),
 });
 
@@ -253,3 +256,49 @@ export const reminderResponseSchema = z.object({
 });
 
 export type ReminderResponse = z.infer<typeof reminderResponseSchema>;
+
+// Scoring + cycle summary
+
+export const objectiveStatusSchema = z.enum(['on-track', 'at-risk', 'behind']);
+
+export type ObjectiveStatus = z.infer<typeof objectiveStatusSchema>;
+
+// How many objectives sit in each status bucket
+export const statusCountsSchema = z.object({
+  'on-track': z.number(),
+  'at-risk': z.number(),
+  behind: z.number(),
+});
+
+export type StatusCounts = z.infer<typeof statusCountsSchema>;
+
+// One objective as the summary sees it — scores only, no KR payload
+export const summaryObjectiveSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  teamId: z.string().nullable(),
+  ownerUserId: z.string(),
+  score: z.number(),
+  status: objectiveStatusSchema,
+});
+
+export type SummaryObjective = z.infer<typeof summaryObjectiveSchema>;
+
+export const summaryTeamSchema = z.object({
+  teamId: z.string(),
+  name: z.string(),
+  avgScore: z.number(),
+  counts: statusCountsSchema,
+});
+
+export type SummaryTeam = z.infer<typeof summaryTeamSchema>;
+
+export const cycleSummaryResponseSchema = z.object({
+  cycle: cycleResponseSchema,
+  elapsed: z.number(),
+  objectives: z.array(summaryObjectiveSchema),
+  teams: z.array(summaryTeamSchema),
+  personal: z.object({ avgScore: z.number(), counts: statusCountsSchema }),
+});
+
+export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
