@@ -153,6 +153,12 @@ cp ./data/.session-secret ./backups/  # don't forget the secret
 Do **not** plain-`cp` the live database without the `-wal` file — you'll
 get a snapshot missing recent writes.
 
+**Application-level export** (third backup path): any signed-in user
+can pull `GET /export` — a JSON document of everything they can see,
+check-in history included. It restores by hand or via the CSV import,
+not byte-for-byte — the SQLite copy above is the real backup; the
+export is the your-data-leaves-with-you guarantee.
+
 **Restore:**
 
 ```bash

@@ -35,6 +35,12 @@ updates…
 - **Auto-updating KRs** — push values from scripts/CI with `okr_…` API
   tokens, or link a KR to a GitHub milestone / Jira JQL count and let the
   sync loop move the number as work closes.
+- **Cycle rollover** — quarter ends: one click closes the cycle and
+  carries unfinished objectives forward with fresh baselines; done work
+  and check-in history stay put.
+- **CSV import/export** — bring objectives in from a spreadsheet
+  (dry-run preview first), take everything out as JSON or CSV. The
+  escape hatch works in both directions, on purpose.
 - **Trends & history** — score-over-time charts and RAG-colored trend
   lines rebuilt from your check-in history (no extra data entry), mini
   trends on the dashboard, cycle-over-cycle comparison.
@@ -200,7 +206,6 @@ Apache-2.0.
 
 ## TODO:
 
-# - import/export (CSV in, CSV/JSON out)
 # - more connectors as folks ask (GitLab? Linear?)
 
 More to come...
