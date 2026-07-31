@@ -159,3 +159,35 @@ describe('share lifecycle', () => {
     ).toBe(404);
   });
 });
+
+describe('KPIs on the public page', () => {
+  it('strip appears with trend but never notes', async () => {
+    // re-enable sharing (disabled by the lifecycle test above)
+    const share = await app.inject({
+      method: 'PUT',
+      url: `/teams/${teamId}/share`,
+      headers: { cookie: admin },
+    });
+    const freshToken = share.json<{ token: string }>().token;
+
+    const kpi = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/kpis`,
+      payload: { name: 'Uptime', unit: '%', direction: 'gte', thresholdLow: 99 },
+      headers: { cookie: admin },
+    });
+    const kpiId = kpi.json<{ id: string }>().id;
+    await app.inject({
+      method: 'POST',
+      url: `/kpis/${kpiId}/readings`,
+      payload: { value: 99.5, note: 'KPI SECRET NOTE' },
+      headers: { cookie: admin },
+    });
+
+    const res = await app.inject({ method: 'GET', url: `/public/${freshToken}/summary` });
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ kpis: { name: string; currentHealth: string; trend: number[] }[] }>();
+    expect(body.kpis[0]).toMatchObject({ name: 'Uptime', currentHealth: 'healthy', trend: [99.5] });
+    expect(res.body).not.toContain('KPI SECRET NOTE');
+  });
+});

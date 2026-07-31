@@ -87,6 +87,19 @@ test('team share link serves a public read-only dashboard', async ({ page, brows
   await page.getByLabel(/team/i).selectOption({ label: 'Publishers' });
   await page.getByRole('button', { name: 'create', exact: true }).click();
 
+  // KPI: create, record a reading, watch health render
+  await page.getByRole('link', { name: 'teams' }).click();
+  await page.getByText('Publishers').click();
+  await page.getByRole('button', { name: '+ KPI' }).click();
+  await page.getByLabel('Name').fill('Uptime');
+  await page.getByLabel('Unit').fill('%');
+  await page.getByLabel('Threshold').fill('99');
+  await page.getByRole('button', { name: 'create KPI' }).click();
+  await expect(page.getByText('Uptime').first()).toBeVisible();
+  await page.getByPlaceholder('value').fill('99.5');
+  await page.getByRole('button', { name: 'record' }).click();
+  await expect(page.getByText('99.5', { exact: false }).first()).toBeVisible();
+
   // fresh browser context = logged out visitor
   const anon = await browser.newContext();
   const anonPage = await anon.newPage();
@@ -94,5 +107,7 @@ test('team share link serves a public read-only dashboard', async ({ page, brows
   await expect(anonPage.getByText('Publishers · OKRs', { exact: false })).toBeVisible();
   await expect(anonPage.getByText('Publish the roadmap')).toBeVisible();
   await expect(anonPage.getByText('public read-only view', { exact: false })).toBeVisible();
+  // KPI strip made it to the public page
+  await expect(anonPage.getByText('Uptime').first()).toBeVisible();
   await anon.close();
 });
