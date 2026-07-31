@@ -24,6 +24,7 @@ import type { OidcConfig } from './config.js';
 import { createDb, type Db } from './db/index.js';
 import { registerCycleRoutes } from './okr/cycles.js';
 import { registerOkrRoutes } from './okr/routes.js';
+import { registerSummaryRoutes } from './okr/summary.js';
 import { registerTeamRoutes } from './teams/routes.js';
 
 const API_VERSION = '0.1.0';
@@ -116,6 +117,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   registerTeamRoutes(app);
   registerCycleRoutes(app);
   registerOkrRoutes(app);
+  registerSummaryRoutes(app);
 
   // OIDC is opt-in — no config, no routes (they 404), password auth untouched
   if (opts.oidc) {
