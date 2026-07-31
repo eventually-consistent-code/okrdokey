@@ -34,6 +34,20 @@
   12-point `trend` array (values only — no notes, no authors, no
   internal ids), exactly mirroring the existing KPI trend pattern in
   share.ts. Payload extension, not a new endpoint.
+- **Machined-metal retheme (#24, added 2026-07-31)**: the UI is a
+  fully-owned custom theme (Tailwind v4 tokens, no framework) — the
+  retheme is a token-values + texture swap, NOT a component rewrite.
+  Locked direction: brushed-steel surfaces (subtle vertical-grain
+  linear gradients), fine mesh grate texture on the page background
+  (SVG data-URI pattern replacing the ruled-paper lines), palette
+  silver/grey/blue — dark steel text on light brushed panels with a
+  steel-blue accent replacing ember. Semantic token NAMES stay
+  (paper/ink/ember/line/rag-*) so components don't churn; only values
+  and textures change. RAG red/yellow/green must keep AA contrast on
+  the new surfaces. Zero new dependencies — gradients and inline SVG
+  patterns only. Fonts: display face may swap to a more machined
+  grotesque if it carries the aesthetic; ledger mono stays. The
+  frontend-design skill drives the execution pass at work time.
 - **Verification posture**: vitest for the history endpoint (series
   correctness incl. pre-first-check-in baseline behavior, multi-KR
   merge ordering, percent/boolean normalization), component tests for
