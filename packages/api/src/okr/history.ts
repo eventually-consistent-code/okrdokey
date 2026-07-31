@@ -111,7 +111,6 @@ export function registerHistoryRoutes(app: FastifyInstance): void {
       params: z.object({ objectiveId: z.string() }),
       response: { 200: objectiveHistoryResponseSchema, 404: errorResponseSchema },
     },
-    // eslint-disable-next-line @typescript-eslint/require-await -- reply-branching handlers must be async for the type provider
     handler: async (req, reply) => {
       const user = req.user as { id: string };
       const obj = accessibleObjective(app, req.params.objectiveId, user.id);
