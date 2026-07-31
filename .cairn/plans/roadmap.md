@@ -5,11 +5,10 @@ milestone: 2
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Foundation — API skeleton, persistence, CI, docker deploy | verified |
-| 2 | Auth & teams — accounts, sessions, OIDC, teams | verified |
-| 3 | OKR core — CRUD, check-in cadence, scoring | verified |
-| 4 | Web UI — full flows + public dashboard | verified |
-| 5 | Integrations — KR auto-update API, GitHub + Jira connectors | verified |
+| 1 | KPI Tracking — stability metrics beside OKRs | pending |
+| 2 | Wizard Lite — guided KR creation + templates | pending |
+| 3 | AI Drafting — BYO-key help writing measurable KRs | pending |
+| 4 | Polish — image slimming, rate limits, session sweep | pending |
 
 ## Archived — v1
 

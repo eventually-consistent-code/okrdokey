@@ -127,6 +127,13 @@
       ],
       "state": "closed",
       "updatedAt": "2026-07-31T08:19:44Z"
+    },
+    "18": {
+      "title": "v2 polish: image slimming, public rate limit, session sweep",
+      "bodyHash": "10b6e88c7b3c4cd4",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T09:09:21Z"
     }
   },
   "phases": {
