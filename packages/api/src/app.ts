@@ -37,6 +37,7 @@ import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
 import { registerCycleRoutes } from './okr/cycles.js';
 import { registerHistoryRoutes } from './okr/history.js';
+import { registerLifecycleRoutes } from './okr/lifecycle.js';
 import { registerKpiRoutes } from './okr/kpis.js';
 import { registerOkrRoutes } from './okr/routes.js';
 import { registerShareRoutes } from './okr/share.js';
@@ -167,6 +168,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerAuthRoutes(api);
     registerTeamRoutes(api);
     registerCycleRoutes(api);
+    registerLifecycleRoutes(api);
     registerOkrRoutes(api);
     registerHistoryRoutes(api);
     registerCheckInRoutes(api);

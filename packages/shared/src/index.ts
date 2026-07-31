@@ -311,6 +311,26 @@ export const cycleSummaryResponseSchema = z.object({
 
 export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
 
+// Cycle lifecycle — close + rollover
+
+export const rolloverRequestSchema = z.object({
+  targetCycleId: z.string(),
+  archiveSource: z.boolean().default(true),
+});
+
+export type RolloverRequest = z.infer<typeof rolloverRequestSchema>;
+
+export const rolloverResponseSchema = z.object({
+  clonedObjectives: z.number(),
+  clonedKeyResults: z.number(),
+  skippedObjectives: z.number(),
+  skippedKeyResults: z.number(),
+  // KRs that had connector links — links do not carry; re-link deliberately
+  hadLinks: z.array(z.object({ title: z.string() })),
+});
+
+export type RolloverResponse = z.infer<typeof rolloverResponseSchema>;
+
 // Objective history — score-over-time reconstructed from check-ins.
 // Series uses CURRENT baseline/target; a numeric KR edited after
 // check-ins makes earlier points approximate.
