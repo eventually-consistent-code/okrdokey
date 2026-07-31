@@ -82,8 +82,8 @@
       "title": "REQ-12: Public read-only dashboard — per-team share link",
       "bodyHash": "ec6f82e4035369d8",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T06:23:31Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T06:27:11Z"
     },
     "13": {
       "title": "REQ-13: OIDC SSO — generic OIDC alongside password login",
