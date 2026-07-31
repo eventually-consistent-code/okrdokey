@@ -45,6 +45,13 @@
   the fallback for lines with no state (e.g. share page KPIs already
   passing health). Applies on both the current theme and the metal
   retheme (rag tokens re-tuned there for AA anyway).
+- **Dashboard cards get trend lines too (user request 2026-07-31)**:
+  each objective row on the dashboard shows a mini score-trend
+  sparkline, RAG-colored by objective status. Data rides the cycle
+  summary endpoint — each per-objective entry gains
+  `trend: number[]` (last 12 event scores, same inline-array pattern
+  as share KPIs) so the dashboard makes zero extra requests. No N+1
+  history fetches.
 - **Machined-metal retheme (#24, added 2026-07-31)**: the UI is a
   fully-owned custom theme (Tailwind v4 tokens, no framework) — the
   retheme is a token-values + texture swap, NOT a component rewrite.

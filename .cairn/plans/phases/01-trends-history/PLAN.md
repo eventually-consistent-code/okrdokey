@@ -12,7 +12,9 @@ values only). GET /objectives/:objectiveId/history — event-based score
 series: fetch all KR check-ins, merge by createdAt (tiebreak rowid),
 step per-KR values (numeric pre-first = baseline; percent/boolean = 0),
 emit objective score per event via scoring.ts functions. share.ts
-inlines KR trends mirroring the KPI pattern. Done when: tests cover
+inlines KR trends mirroring the KPI pattern. Cycle summary per-objective
+entries gain `trend: number[]` (last 12 event scores from the same
+series builder) so the dashboard needs no extra requests. Done when: tests cover
 single-KR series, multi-KR merge ordering, decreasing-is-good numeric,
 percent/boolean, empty history (points: []), 404 no-leak, and the
 share payload trend (values only — no notes/ids).
@@ -23,13 +25,14 @@ date labels, <2 points → same "not enough" message as Sparkline).
 RAG-colored trend lines: Sparkline + TimeLine grow a `tone`
 ('red'|'yellow'|'green', default accent) mapped to rag tokens; wire
 callers — KR sparklines ← currentConfidence, objective TimeLine ←
-status, KPI sparklines ← health.
+status, KPI sparklines ← health. Dashboard objective rows render a
+mini sparkline from the summary trend array, toned by status.
 Objective page: score-over-time chart from useObjectiveHistory above
 the KR list. Cycles page: "compare cycles" section — last 4 cycles
 via existing useSummary per cycle, avg-score bars + status counts.
 Share page: KR sparklines from the new trend arrays. Done when:
 component tests cover TimeLine rendering + empty state, tone→stroke
-mapping (red/yellow/green + default), compare view
+mapping (red/yellow/green + default), dashboard row sparkline, compare view
 with 2 cycles, share sparkline presence; lint/typecheck clean.
 
 ### T3 — Machined-metal retheme (#24)
