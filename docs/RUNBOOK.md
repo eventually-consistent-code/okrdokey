@@ -17,6 +17,7 @@ lose this file?", the answer is in here…
 - [Rate limits](#rate-limits)
 - [SSO (OIDC) operations](#sso-oidc-operations)
 - [AI drafting operations](#ai-drafting-operations)
+- [Email operations](#email-operations)
 - [Troubleshooting](#troubleshooting)
 - [Disaster recovery](#disaster-recovery)
 
@@ -266,6 +267,33 @@ provider email never hijacks an existing account.
 - **Model choice:** `AI_MODEL` (default `claude-opus-4-8`). No
   restart-free switching — it's an env var.
 
+## Email operations
+
+Set `SMTP_HOST` + `SMTP_FROM` (both or neither — a partial set refuses
+to boot) and email features light up: team admins can enable a weekly
+digest (day + hour picker in Team Settings) and flip reminder nudges to
+email alongside the webhook. `SMTP_USER`/`SMTP_PASS` are an optional
+pair — unauthenticated LAN relays work. Port 587/STARTTLS by default;
+`SMTP_SECURE=true` for implicit TLS on 465.
+
+Operational notes:
+
+- **Prove the path before trusting the schedule** — the digest card's
+  "send me a preview" button sends to you immediately through the real
+  transport.
+- Sends are per-recipient (no shared To/CC — addresses never leak
+  between teammates) with 3 attempts and backoff; outcomes land in the
+  `email_deliveries` table (`sqlite3 data/okrdokey.sqlite "select kind,
+  attempts, delivered_at, delivery_failed_at, last_error from
+  email_deliveries order by created_at desc limit 10"`). Message bodies
+  are never stored.
+- Digest schedules use the same watermark pattern as reminders — a
+  restart never double-sends, and windows missed while the container
+  was down collapse into the next tick.
+- Remove the SMTP vars and every email route and UI affordance
+  disappears; schedules stay in the database, dormant, for when SMTP
+  returns.
+
 ## Troubleshooting
 
 **Logged out constantly / login loops behind a proxy** — the proxy isn't
@@ -291,6 +319,12 @@ without a compile step).
 
 **Database is locked** — something else has the SQLite file open (a
 second container, a stray `sqlite3` shell). One writer only.
+
+**Emails not arriving** — check `email_deliveries` for `last_error`
+(auth rejected, connection refused), confirm the relay accepts your
+`SMTP_FROM` domain, and use the digest preview button as the test
+probe. `SMTP_SECURE=true` on port 587 is the classic mismatch — 587 is
+STARTTLS (`false`), 465 is implicit TLS (`true`).
 
 **Webhook reminders not arriving** — check the logs for delivery errors
 (the payload endpoint must answer 2xx), confirm the reminder's cron

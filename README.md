@@ -52,6 +52,9 @@ updates…
 - **AI drafting (optional, BYO key)** — draft 2–3 measurable KR suggestions
   from an objective, or get a critique + rewrite of one you typed. A coach,
   not an autopilot.
+- **Email digests (optional)** — point it at any SMTP server and teams
+  get a weekly summary email (scores, statuses, who checked in) plus
+  optional check-in reminder emails. No SMTP config, no email surface.
 - **Public read-only dashboards** — share a team's cycle behind an
   unguessable link, revocable any time.
 - **SSO via any OIDC provider** (Authentik, Keycloak, Authelia, Google…) —
@@ -97,6 +100,11 @@ Everything is environment variables, all optional:
 | `OIDC_CLIENT_ID` | (unset) | OIDC client id |
 | `OIDC_CLIENT_SECRET` | (unset) | OIDC client secret |
 | `OIDC_REDIRECT_URI` | `<APP_URL>/auth/oidc/callback` | Override if your proxy rewrites paths |
+| `SMTP_HOST` | (unset) | SMTP server — set with `SMTP_FROM` or not at all |
+| `SMTP_FROM` | (unset) | From address for digests + reminder emails |
+| `SMTP_PORT` | `587` | SMTP port |
+| `SMTP_SECURE` | `false` | `true` for implicit TLS (465); default is STARTTLS |
+| `SMTP_USER` / `SMTP_PASS` | (unset) | Auth pair — both or neither (unauthenticated relays work) |
 | `ANTHROPIC_API_KEY` | (unset) | Instance-wide AI key — fallback for teams without one |
 | `AI_MODEL` | `claude-opus-4-8` | Model used for AI drafting |
 | `AI_FEATURES` | `on` | Set to `off` to remove every AI route and UI affordance |

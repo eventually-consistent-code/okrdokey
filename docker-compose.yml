@@ -21,3 +21,9 @@ services:
     #   ANTHROPIC_API_KEY: sk-ant-...
     #   AI_MODEL: claude-opus-4-8
     #   AI_FEATURES: on
+    # Email digests (optional): both SMTP_HOST and SMTP_FROM, or neither.
+    #   SMTP_HOST: mail.example.com
+    #   SMTP_FROM: okrdokey@example.com
+    #   SMTP_PORT: "587"
+    #   SMTP_USER: okrdokey
+    #   SMTP_PASS: change-me
