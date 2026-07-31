@@ -237,6 +237,34 @@ describe('rollover', () => {
     expect(body.clonedKeyResults).toBe(1);
   });
 
+  it('boolean KRs reset to not-done on rollover', async () => {
+    const src = await makeCycle('src-bool');
+    const dst = await makeCycle('dst-bool');
+    const objId = await makeObjective('Gate work', src);
+    // one done boolean (stays), one pending numeric (carries) — the
+    // objective is unfinished so it rolls
+    const gate = await makeKr(objId, { title: 'Cert passed', type: 'boolean', baseline: 0, target: 1 });
+    await checkIn(gate, 1);
+    const num = await makeKr(objId, { title: 'N 0→10', type: 'numeric', baseline: 0, target: 10 });
+    await checkIn(num, 3);
+    const pendingGate = await makeKr(objId, { title: 'Audit passed', type: 'boolean', baseline: 0, target: 1 });
+    void pendingGate;
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/cycles/${src}/rollover`,
+      payload: { targetCycleId: dst },
+      headers: { cookie },
+    });
+    const body = res.json<{ clonedKeyResults: number; skippedKeyResults: number }>();
+    expect(body.clonedKeyResults).toBe(2); // numeric + pending boolean
+    expect(body.skippedKeyResults).toBe(1); // the done boolean stays
+
+    const clone = (await objectivesIn(dst)).find((o) => o.title === 'Gate work');
+    const clonedBool = clone?.keyResults.find((k) => k.title === 'Audit passed');
+    expect(clonedBool).toMatchObject({ baseline: 0, target: 1, currentValue: 0, currentConfidence: null });
+  });
+
   it('archiveSource: false leaves source objectives active', async () => {
     const src = await makeCycle('src-keep');
     const dst = await makeCycle('dst-keep');

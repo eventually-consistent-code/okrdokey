@@ -108,6 +108,25 @@ describe('import', () => {
     expect(mine?.keyResults.map((k) => k.title).sort()).toEqual(['Churn, down', 'MRR 10→50']);
   });
 
+  it('commits an objective row with empty KR columns', async () => {
+    const csv = `${HEADER}\nBare objective,,,2026-Q4,,,,,\n`;
+    const res = await app.inject({
+      method: 'POST',
+      url: '/import/objectives',
+      payload: { csv },
+      headers: { cookie },
+    });
+    expect(res.json<{ creates: { objectives: number; keyResults: number } }>().creates).toEqual({
+      objectives: 1,
+      keyResults: 0,
+    });
+    const objs = (
+      await app.inject({ method: 'GET', url: '/objectives', headers: { cookie } })
+    ).json<{ title: string; keyResults: unknown[] }[]>();
+    const bare = objs.find((o) => o.title === 'Bare objective');
+    expect(bare?.keyResults).toHaveLength(0);
+  });
+
   it('any bad row aborts the whole import', async () => {
     const csv = `${HEADER}\nGood objective,,,2026-Q3,Fine 0→10,numeric,,0,10\nBad objective,,,2026-Q3,Broken,numeric,,5,5\n`;
     const before = await countObjectives();
