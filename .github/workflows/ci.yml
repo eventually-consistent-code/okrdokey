@@ -40,3 +40,22 @@ jobs:
       - name: migration check
         working-directory: packages/api
         run: npx drizzle-kit check
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      - name: install chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: e2e
+        run: npm run e2e

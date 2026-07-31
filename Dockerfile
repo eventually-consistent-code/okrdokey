@@ -1,16 +1,31 @@
 ##################################################################
-# OKRdokey — two-stage build. Stage one installs production deps #
-# only; stage two ships the workspace source on a slim runtime.  #
-# One container, one volume. Boring on purpose.                  #
+# OKRdokey — three-stage build. Web assets built once, production #
+# deps installed once, slim runtime ships source + dist + deps.   #
+# One container, one process, one volume. Boring on purpose.      #
 ##################################################################
 
-# --- deps stage ---
+# --- web build stage ---
+FROM node:22-trixie-slim AS build
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json packages/shared/
+COPY packages/api/package.json packages/api/
+COPY packages/web/package.json packages/web/
+RUN npm ci --ignore-scripts
+
+COPY tsconfig.base.json vitest.config.ts ./
+COPY packages ./packages
+RUN npm run build --workspace packages/web
+
+# --- production deps stage ---
 FROM node:22-trixie-slim AS deps
 
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/api/package.json packages/api/
+COPY packages/web/package.json packages/web/
 # better-sqlite3 ships prebuilt binaries inside the package — no scripts needed
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
@@ -24,7 +39,12 @@ ENV NODE_ENV=production \
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json tsconfig.base.json ./
-COPY packages ./packages
+COPY packages/shared ./packages/shared
+COPY packages/api ./packages/api
+COPY packages/web/package.json ./packages/web/package.json
+COPY --from=build /app/packages/web/dist ./packages/web/dist
+COPY docker/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 VOLUME /data
 EXPOSE 3000
@@ -32,4 +52,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
   CMD node -e "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["npx", "tsx", "packages/api/src/main.ts"]
+ENTRYPOINT ["./entrypoint.sh"]
