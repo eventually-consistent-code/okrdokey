@@ -188,6 +188,15 @@
       ],
       "state": "closed",
       "updatedAt": "2026-07-31T12:31:15Z"
+    },
+    "25": {
+      "title": "v3 P1 verify: T2 done-when promises component tests for \"compare view with 2 cycles\" and \"share sparkline presence\" — neither was written (TimeLine + tone tests exist; dashboard sparkline is asserted in e2e only). Coverage gap vs plan text, not a behavior bug.",
+      "bodyHash": "e3b0c44298fc1c14",
+      "labels": [
+        "cairn:bug"
+      ],
+      "state": "closed",
+      "updatedAt": "2026-07-31T13:13:40Z"
     }
   },
   "phases": {
