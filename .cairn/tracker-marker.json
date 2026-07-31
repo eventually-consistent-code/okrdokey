@@ -206,6 +206,15 @@
       ],
       "state": "closed",
       "updatedAt": "2026-07-31T14:22:48Z"
+    },
+    "27": {
+      "title": "v3 P3 verify: (1) email.test.ts digest-content test TITLE claims \"machine check-ins excluded\" but the fixture contains no machine-source check-in — the exclusion is never exercised (title-level phantom coverage); (2) PLAN T2 done-when lists a disabled-schedule tick case that doesn't exist; (3) the reminder-form email toggle (T3 deliverable) has no component test.",
+      "bodyHash": "e3b0c44298fc1c14",
+      "labels": [
+        "cairn:bug"
+      ],
+      "state": "closed",
+      "updatedAt": "2026-07-31T14:53:06Z"
     }
   },
   "phases": {

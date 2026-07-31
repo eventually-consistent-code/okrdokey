@@ -7,7 +7,7 @@ milestone: 3
 |-------|------|--------|
 | 1 | Trends & History — charts from existing check-in data | verified |
 | 2 | Cycle & Data Lifecycle — rollover + CSV import/export | verified |
-| 3 | Email Digests — optional SMTP summaries + reminders | pending |
+| 3 | Email Digests — optional SMTP summaries + reminders | verified |
 
 ## Archived — v1
 
