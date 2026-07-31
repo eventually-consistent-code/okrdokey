@@ -14,3 +14,10 @@ services:
     volumes:
       - ./data:/data
     restart: unless-stopped
+    # AI drafting (optional): set an instance-wide Anthropic key here, or
+    # let each team bring its own in Team Settings. AI_FEATURES=off kills
+    # every AI route and UI affordance.
+    # environment:
+    #   ANTHROPIC_API_KEY: sk-ant-...
+    #   AI_MODEL: claude-opus-4-8
+    #   AI_FEATURES: on

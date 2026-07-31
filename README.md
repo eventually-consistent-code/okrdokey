@@ -68,6 +68,34 @@ description = "OKRdokey API token"
 regex = '''okr_[A-Za-z0-9_-]{43}'''
 ```
 
+## AI drafting (optional, bring your own key)
+
+The guided KR wizard can draft 2–3 measurable key-result suggestions from an
+objective, and critique a key result you typed yourself. It's a coach, not an
+autopilot — suggestions only prefill the form, and every baseline it invents
+is a placeholder you replace with your real number.
+
+Two ways to turn it on:
+
+- **Per team** — a team admin pastes an Anthropic API key in Team Settings.
+  The key is validated against the API before it saves, encrypted at rest,
+  and never shown again (last four characters only).
+- **Instance-wide** — set `ANTHROPIC_API_KEY` on the server. Personal
+  objectives always use the instance key; team objectives prefer the team
+  key when one is set.
+
+Environment knobs:
+
+| Variable | Default | What it does |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | (unset) | Instance-wide Anthropic key — fallback for teams without one |
+| `AI_MODEL` | `claude-opus-4-8` | Model used for drafting |
+| `AI_FEATURES` | `on` | Set to `off` to remove every AI route and UI affordance |
+
+Guardrails: requests are proxied server-side (keys never reach the browser),
+prompt bodies are never logged, and drafting is capped at 10 requests per
+user and 30 per team per hour.
+
 ## License
 
 Apache-2.0.
