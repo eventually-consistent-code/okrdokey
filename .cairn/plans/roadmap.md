@@ -7,7 +7,7 @@ milestone: 2
 |-------|------|--------|
 | 1 | KPI Tracking — stability metrics beside OKRs | verified |
 | 2 | Wizard Lite — guided KR creation + templates | verified |
-| 3 | AI Drafting — BYO-key help writing measurable KRs | pending |
+| 3 | AI Drafting — BYO-key help writing measurable KRs | verified |
 | 4 | Polish — image slimming, rate limits, session sweep | pending |
 
 ## Archived — v1
