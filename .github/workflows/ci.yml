@@ -1,0 +1,42 @@
+########################
+# CI by John Reed      #
+# 2026-07-30           #
+########################
+#
+# One workflow, whole story: install, lint, typecheck, test, and make
+# sure the Drizzle schema and its generated migrations agree.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      - name: lint
+        run: npm run lint
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: test
+        run: npm test
+
+      - name: migration check
+        working-directory: packages/api
+        run: npx drizzle-kit check
