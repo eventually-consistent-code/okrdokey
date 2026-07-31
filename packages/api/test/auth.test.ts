@@ -6,6 +6,8 @@
  * Author(s): John Reed
  */
 
+import type { OutgoingHttpHeaders } from 'node:http';
+
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -14,7 +16,7 @@ import { buildApp } from '../src/app.js';
 let app: FastifyInstance;
 
 // pulls "sessionId=..." out of a set-cookie header for replay
-function cookieOf(res: { headers: Record<string, number | string | string[] | undefined> }): string {
+function cookieOf(res: { headers: OutgoingHttpHeaders }): string {
   const raw = res.headers['set-cookie'];
   const header = Array.isArray(raw) ? raw[0] : raw;
   return String(header).split(';')[0] ?? '';
@@ -23,7 +25,10 @@ function cookieOf(res: { headers: Record<string, number | string | string[] | un
 const jane = { email: 'jane@example.com', password: 'correct-horse-battery', displayName: 'Jane' };
 
 beforeAll(async () => {
-  app = await buildApp({ dbPath: ':memory:', sessionSecret: 'test-secret-at-least-32-chars-long!!' });
+  app = await buildApp({
+    dbPath: ':memory:',
+    sessionSecret: 'test-secret-at-least-32-chars-long!!',
+  });
   await app.ready();
 });
 

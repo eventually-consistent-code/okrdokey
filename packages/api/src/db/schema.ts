@@ -5,7 +5,7 @@
  * Author(s): John Reed
  */
 
-import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // Schema version marker — proves the migration pipeline end-to-end.
 export const meta = sqliteTable('meta', {
@@ -23,6 +23,23 @@ export const users = sqliteTable('users', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
+
+// Links an external OIDC identity (issuer + subject) to a local account.
+// One row per provider identity — a user can have several, but each
+// (issuer, sub) pair maps to exactly one user.
+export const oidcIdentities = sqliteTable(
+  'oidc_identities',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    issuer: text('issuer').notNull(),
+    subject: text('subject').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  (t) => [uniqueIndex('oidc_identities_issuer_subject_idx').on(t.issuer, t.subject)],
+);
 
 // Server-side sessions — revocation is a DELETE, "log out everywhere" works
 export const sessions = sqliteTable('sessions', {

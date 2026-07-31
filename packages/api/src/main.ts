@@ -9,7 +9,11 @@ import { loadConfig } from './config.js';
 // Main
 
 const config = loadConfig();
-const app = await buildApp({ dbPath: config.dbPath, sessionSecret: config.sessionSecret });
+const app = await buildApp({
+  dbPath: config.dbPath,
+  sessionSecret: config.sessionSecret,
+  oidc: config.oidc,
+});
 
 try {
   await app.listen({ port: config.port, host: config.host });
