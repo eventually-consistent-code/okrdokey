@@ -33,6 +33,7 @@ import { registerLinkRoutes } from './connectors/links.js';
 import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
 import { registerCycleRoutes } from './okr/cycles.js';
+import { registerKpiRoutes } from './okr/kpis.js';
 import { registerOkrRoutes } from './okr/routes.js';
 import { registerShareRoutes } from './okr/share.js';
 import { registerSummaryRoutes } from './okr/summary.js';
@@ -143,6 +144,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerReminderRoutes(api);
     registerSummaryRoutes(api);
     registerShareRoutes(api);
+    registerKpiRoutes(api);
     registerTokenRoutes(api);
     registerLinkRoutes(api, {
       sessionSecret: opts.sessionSecret ?? 'dev-only-secret-do-not-use-in-production!!',

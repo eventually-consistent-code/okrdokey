@@ -379,7 +379,7 @@ export type ApiTokenCreatedResponse = z.infer<typeof apiTokenCreatedResponseSche
 // KR links (work-tracker bindings)
 
 export const krLinkProviderSchema = z.enum(['github', 'jira']);
-export const krLinkModeSchema = z.enum(['percent-closed', 'count-closed']);
+export const krLinkModeSchema = z.enum(['percent-closed', 'count-closed', 'count']);
 
 export const githubLinkConfigSchema = z.union([
   z.object({ repo: z.string().regex(/^[^/\s]+\/[^/\s]+$/), milestoneNumber: z.number().int().positive() }),
@@ -413,7 +413,8 @@ export type UpsertKrLinkRequest = z.infer<typeof upsertKrLinkRequestSchema>;
 
 export const krLinkResponseSchema = z.object({
   id: z.string(),
-  keyResultId: z.string(),
+  keyResultId: z.string().nullable(),
+  kpiId: z.string().nullable(),
   provider: krLinkProviderSchema,
   config: z.unknown(),
   mode: krLinkModeSchema,
@@ -424,3 +425,64 @@ export const krLinkResponseSchema = z.object({
 });
 
 export type KrLinkResponse = z.infer<typeof krLinkResponseSchema>;
+
+// KPIs — cycle-less stability metrics, team-owned, computed health
+
+export const kpiDirectionSchema = z.enum(['gte', 'lte', 'range']);
+export const kpiHealthSchema = z.enum(['healthy', 'warning', 'breach']);
+
+export type KpiHealthState = z.infer<typeof kpiHealthSchema>;
+
+export const createKpiRequestSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    unit: z.string().max(16).optional(),
+    direction: kpiDirectionSchema,
+    thresholdLow: z.number().optional(),
+    thresholdHigh: z.number().optional(),
+  })
+  .refine(
+    (k) =>
+      k.direction === 'gte'
+        ? k.thresholdLow !== undefined
+        : k.direction === 'lte'
+          ? k.thresholdHigh !== undefined
+          : k.thresholdLow !== undefined && k.thresholdHigh !== undefined && k.thresholdLow < k.thresholdHigh,
+    { message: 'thresholds must match direction (gte: low; lte: high; range: low < high)' },
+  );
+
+export type CreateKpiRequest = z.infer<typeof createKpiRequestSchema>;
+
+export const kpiResponseSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  name: z.string(),
+  unit: z.string().nullable(),
+  direction: kpiDirectionSchema,
+  thresholdLow: z.number().nullable(),
+  thresholdHigh: z.number().nullable(),
+  currentValue: z.number(),
+  currentHealth: kpiHealthSchema.nullable(),
+  archivedAt: z.iso.datetime().nullable(),
+});
+
+export type KpiResponse = z.infer<typeof kpiResponseSchema>;
+
+export const createKpiReadingRequestSchema = z.object({
+  value: z.number(),
+  note: z.string().max(1000).optional(),
+});
+
+export type CreateKpiReadingRequest = z.infer<typeof createKpiReadingRequestSchema>;
+
+export const kpiReadingResponseSchema = z.object({
+  id: z.string(),
+  kpiId: z.string(),
+  value: z.number(),
+  note: z.string().nullable(),
+  authorUserId: z.string().nullable(),
+  source: checkInSourceSchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type KpiReadingResponse = z.infer<typeof kpiReadingResponseSchema>;

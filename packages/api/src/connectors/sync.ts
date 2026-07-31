@@ -9,8 +9,9 @@
 import { eq, lte } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 
-import { checkIns, keyResults, metricLinks } from '../db/schema.js';
+import { checkIns, keyResults, kpis, metricLinks } from '../db/schema.js';
 import { decryptSecret } from '../lib/secrets.js';
+import { recordKpiReading } from '../okr/kpis.js';
 import type { AdapterRegistry, LinkProgress } from './types.js';
 
 const MAX_BACKOFF_MULTIPLIER = 16; // interval × 16, ~4h at the 15m default
@@ -20,9 +21,12 @@ export interface SyncOptions {
   sessionSecret: string;
 }
 
-// percent-closed → 0..100 onto a percent KR; count-closed → done count
-function mapValue(mode: 'percent-closed' | 'count-closed', progress: LinkProgress): number {
-  if (mode === 'count-closed') return progress.done;
+// percent-closed → 0..100; count-closed/count → done count
+function mapValue(
+  mode: 'percent-closed' | 'count-closed' | 'count',
+  progress: LinkProgress,
+): number {
+  if (mode !== 'percent-closed') return progress.done;
   if (progress.total <= 0) return 0;
   return Math.round((progress.done / progress.total) * 100);
 }
@@ -46,11 +50,17 @@ async function syncOne(
     });
 
     if (!progress.notModified) {
-      const kr = app.db.select().from(keyResults).where(eq(keyResults.id, link.keyResultId)).get();
-      if (kr) {
-        const value = mapValue(link.mode, progress);
+      const value = mapValue(link.mode, progress);
+
+      // Subject dispatch — a link points at EXACTLY one of KR or KPI
+      if (link.keyResultId) {
+        const kr = app.db
+          .select()
+          .from(keyResults)
+          .where(eq(keyResults.id, link.keyResultId))
+          .get();
         // no-op syncs don't spam the history
-        if (value !== kr.currentValue) {
+        if (kr && value !== kr.currentValue) {
           const row: typeof checkIns.$inferSelect = {
             id: crypto.randomUUID(),
             keyResultId: kr.id,
@@ -69,6 +79,11 @@ async function syncOne(
               .where(eq(keyResults.id, kr.id))
               .run();
           });
+        }
+      } else if (link.kpiId) {
+        const kpi = app.db.select().from(kpis).where(eq(kpis.id, link.kpiId)).get();
+        if (kpi && value !== kpi.currentValue) {
+          recordKpiReading(app, kpi, { value, source: link.provider });
         }
       }
     }
