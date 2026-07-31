@@ -5,8 +5,10 @@
  */
 
 import { githubAdapter } from './github.js';
+import { jiraAdapter } from './jira.js';
 import type { AdapterRegistry } from './types.js';
 
 export const adapters: AdapterRegistry = {
   github: githubAdapter,
+  jira: jiraAdapter,
 };
