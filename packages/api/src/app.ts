@@ -17,12 +17,15 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 
+import authPlugin from './auth/plugin.js';
+import { registerAuthRoutes } from './auth/routes.js';
 import { createDb, type Db } from './db/index.js';
 
 const API_VERSION = '0.1.0';
 
 export interface BuildAppOptions {
   dbPath: string;
+  sessionSecret?: string;
 }
 
 declare module 'fastify' {
@@ -48,6 +51,12 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     dbHandle.close();
   });
 
+  // Auth — cookie, session store, default-deny hook (order matters: before
+  // routes register)
+  await app.register(authPlugin, {
+    sessionSecret: opts.sessionSecret ?? 'dev-only-secret-do-not-use-in-production!!',
+  });
+
   // OpenAPI — generated from the Zod route schemas, served at /docs
   await app.register(swagger, {
     openapi: {
@@ -55,6 +64,11 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
         title: 'OKRdokey API',
         description: 'Simple, self-hostable OKR tracker.',
         version: API_VERSION,
+      },
+      components: {
+        securitySchemes: {
+          cookieAuth: { type: 'apiKey', in: 'cookie', name: 'sessionId' },
+        },
       },
     },
     transform: jsonSchemaTransform,
@@ -81,6 +95,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   app.route({
     method: 'GET',
     url: '/health',
+    config: { public: true },
     schema: {
       description: 'Liveness check',
       tags: ['system'],
@@ -91,6 +106,8 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     },
     handler: () => ({ status: 'ok' as const, version: API_VERSION }),
   });
+
+  registerAuthRoutes(app);
 
   return app;
 }

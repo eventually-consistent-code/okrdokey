@@ -25,3 +25,29 @@ export const errorResponseSchema = z.object({
 });
 
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
+
+// Auth
+
+export const signupRequestSchema = z.object({
+  email: z.email(),
+  password: z.string().min(10).max(128),
+  displayName: z.string().min(1).max(80),
+});
+
+export type SignupRequest = z.infer<typeof signupRequestSchema>;
+
+export const loginRequestSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1).max(128),
+});
+
+export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+export const userResponseSchema = z.object({
+  id: z.string(),
+  email: z.email(),
+  displayName: z.string(),
+  createdAt: z.iso.datetime(),
+});
+
+export type UserResponse = z.infer<typeof userResponseSchema>;
