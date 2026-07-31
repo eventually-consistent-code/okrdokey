@@ -34,7 +34,8 @@ declare module 'fastify' {
 // Builds the whole app — swagger, error handling, routes, db — ready to listen
 export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: { level: process.env.LOG_LEVEL ?? 'info' },
+    logger:
+      process.env.NODE_ENV === 'test' ? false : { level: process.env.LOG_LEVEL ?? 'info' },
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
