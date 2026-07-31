@@ -17,8 +17,9 @@ test('close + rollover carries unfinished work into the next cycle', async ({ pa
   await page.getByRole('button', { name: 'sign up' }).click();
 
   // two cycles (unique names — cycles are instance-global across specs)
-  await expect(page.getByText('No cycles yet.')).toBeVisible();
-  await page.getByRole('button', { name: 'create a cycle' }).click();
+  // cycles are instance-global: an earlier spec may have created some, so
+  // go straight to the cycles page (ai-draft.spec owns the empty-state check)
+  await page.getByRole('link', { name: 'cycles' }).click();
   await page.getByLabel('Name').fill('2027-Q1');
   await page.getByRole('button', { name: 'create cycle' }).click();
   await expect(page.getByText('2027-01-01 → 2027-03-31')).toBeVisible();

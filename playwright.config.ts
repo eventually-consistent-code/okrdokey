@@ -10,6 +10,10 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
+  // cycles are instance-global and specs share one server — parallel
+  // workers race on shared state (empty-state assertions, cycle names,
+  // dashboard picker defaults). Serial is ~30s slower and deterministic.
+  workers: 1,
   use: { baseURL: 'http://localhost:3999' },
   webServer: [
     {

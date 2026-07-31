@@ -19,8 +19,9 @@ test('signup → cycle → objective → check-in → dashboard', async ({ page 
   await page.getByRole('button', { name: 'sign up' }).click();
 
   // no cycles yet — the dashboard should point us at cycle creation
-  await expect(page.getByText('No cycles yet.')).toBeVisible();
-  await page.getByRole('button', { name: 'create a cycle' }).click();
+  // cycles are instance-global: an earlier spec may have created some, so
+  // go straight to the cycles page (ai-draft.spec owns the empty-state check)
+  await page.getByRole('link', { name: 'cycles' }).click();
 
   // quarter shortcut
   await page.getByLabel('Name').fill('2026-Q3');
