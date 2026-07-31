@@ -13,7 +13,7 @@ import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { runSync } from '../src/connectors/sync.js';
 import type { LinkProgress } from '../src/connectors/types.js';
-import { krLinks } from '../src/db/schema.js';
+import { metricLinks } from '../src/db/schema.js';
 
 const SECRET = 'test-secret-at-least-32-chars-long!!';
 
@@ -121,7 +121,7 @@ describe('sync engine', () => {
     ).json<unknown[]>().length;
 
     // force due again
-    app.db.update(krLinks).set({ syncDueAt: new Date(0) }).run();
+    app.db.update(metricLinks).set({ syncDueAt: new Date(0) }).run();
     const adapter = vi.fn(async (): Promise<LinkProgress> => Promise.resolve({ done: 3, total: 4 }));
     await runSync(app, new Date(), { adapters: { github: adapter }, sessionSecret: SECRET });
 
@@ -130,28 +130,28 @@ describe('sync engine', () => {
     ).json<unknown[]>().length;
     expect(after).toBe(before);
 
-    const row = app.db.select().from(krLinks).where(eq(krLinks.keyResultId, percentKrId)).get();
+    const row = app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, percentKrId)).get();
     expect(row?.syncDueAt.getTime()).toBeGreaterThan(Date.now());
   });
 
   it('notModified (304) skips the write, keeps the etag fresh', async () => {
-    app.db.update(krLinks).set({ syncDueAt: new Date(0) }).run();
+    app.db.update(metricLinks).set({ syncDueAt: new Date(0) }).run();
     const adapter = vi.fn(
       async (): Promise<LinkProgress> => Promise.resolve({ done: 0, total: 0, notModified: true, etag: 'W/"abc"' }),
     );
     await runSync(app, new Date(), { adapters: { github: adapter }, sessionSecret: SECRET });
-    const row = app.db.select().from(krLinks).where(eq(krLinks.keyResultId, percentKrId)).get();
+    const row = app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, percentKrId)).get();
     expect(row?.etag).toBe('W/"abc"');
     expect(row?.lastError).toBeNull();
   });
 
   it('failure records last_error and backs off exponentially', async () => {
-    app.db.update(krLinks).set({ syncDueAt: new Date(0) }).run();
+    app.db.update(metricLinks).set({ syncDueAt: new Date(0) }).run();
     const boom = vi.fn(async (): Promise<LinkProgress> => Promise.reject(new Error('GitHub says no')));
     const now = new Date();
     await runSync(app, now, { adapters: { github: boom }, sessionSecret: SECRET });
 
-    const row = app.db.select().from(krLinks).where(eq(krLinks.keyResultId, percentKrId)).get();
+    const row = app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, percentKrId)).get();
     expect(row?.lastError).toBe('GitHub says no');
     expect(row?.consecutiveFailures).toBe(1);
     // first failure: interval × 2 (SQLite timestamps round to seconds)
@@ -168,10 +168,10 @@ describe('sync engine', () => {
   });
 
   it('secrets round-trip encrypted — ciphertext in db, plaintext to adapter', async () => {
-    const row = app.db.select().from(krLinks).where(eq(krLinks.keyResultId, countKrId)).get();
+    const row = app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, countKrId)).get();
     expect(row?.secretCiphertext).not.toContain('ghp_fake');
 
-    app.db.update(krLinks).set({ syncDueAt: new Date(0) }).where(eq(krLinks.keyResultId, countKrId)).run();
+    app.db.update(metricLinks).set({ syncDueAt: new Date(0) }).where(eq(metricLinks.keyResultId, countKrId)).run();
     let seenSecret = '';
     const adapter = vi.fn(async (input: { secret: string }): Promise<LinkProgress> => {
       seenSecret = input.secret;

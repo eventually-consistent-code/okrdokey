@@ -9,7 +9,7 @@
 import { eq, lte } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 
-import { checkIns, keyResults, krLinks } from '../db/schema.js';
+import { checkIns, keyResults, metricLinks } from '../db/schema.js';
 import { decryptSecret } from '../lib/secrets.js';
 import type { AdapterRegistry, LinkProgress } from './types.js';
 
@@ -29,7 +29,7 @@ function mapValue(mode: 'percent-closed' | 'count-closed', progress: LinkProgres
 
 async function syncOne(
   app: FastifyInstance,
-  link: typeof krLinks.$inferSelect,
+  link: typeof metricLinks.$inferSelect,
   now: Date,
   opts: SyncOptions,
 ): Promise<void> {
@@ -74,7 +74,7 @@ async function syncOne(
     }
 
     app.db
-      .update(krLinks)
+      .update(metricLinks)
       .set({
         etag: progress.etag !== undefined ? progress.etag : link.etag,
         lastSyncedAt: now,
@@ -82,19 +82,19 @@ async function syncOne(
         consecutiveFailures: 0,
         syncDueAt: new Date(now.getTime() + interval),
       })
-      .where(eq(krLinks.id, link.id))
+      .where(eq(metricLinks.id, link.id))
       .run();
   } catch (err) {
     const failures = link.consecutiveFailures + 1;
     const multiplier = Math.min(2 ** failures, MAX_BACKOFF_MULTIPLIER);
     app.db
-      .update(krLinks)
+      .update(metricLinks)
       .set({
         lastError: err instanceof Error ? err.message : String(err),
         consecutiveFailures: failures,
         syncDueAt: new Date(now.getTime() + interval * multiplier),
       })
-      .where(eq(krLinks.id, link.id))
+      .where(eq(metricLinks.id, link.id))
       .run();
   }
 }
@@ -105,7 +105,7 @@ export async function runSync(
   now: Date,
   opts: SyncOptions,
 ): Promise<void> {
-  const due = app.db.select().from(krLinks).where(lte(krLinks.syncDueAt, now)).all();
+  const due = app.db.select().from(metricLinks).where(lte(metricLinks.syncDueAt, now)).all();
   for (const link of due) {
     await syncOne(app, link, now, opts);
   }

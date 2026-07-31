@@ -5,7 +5,8 @@
  * Author(s): John Reed
  */
 
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+import { check, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // Schema version marker — proves the migration pipeline end-to-end.
 export const meta = sqliteTable('meta', {
@@ -129,26 +130,68 @@ export const apiTokens = sqliteTable('api_tokens', {
   revokedAt: integer('revoked_at', { mode: 'timestamp' }),
 });
 
-// KR ↔ work-tracker bindings — one per KR; due-ness lives in SQLite like
-// the reminders watermark
-export const krLinks = sqliteTable('kr_links', {
+// KPIs — cycle-less stability metrics, team-owned. Health is COMPUTED
+// (unlike KR confidence, which is authored sentiment).
+export const kpis = sqliteTable('kpis', {
   id: text('id').primaryKey(),
-  keyResultId: text('key_result_id')
+  teamId: text('team_id')
     .notNull()
-    .unique()
-    .references(() => keyResults.id),
-  provider: text('provider', { enum: ['github', 'jira'] }).notNull(),
-  config: text('config').notNull(),
-  mode: text('mode', { enum: ['percent-closed', 'count-closed'] }).notNull(),
-  secretCiphertext: text('secret_ciphertext').notNull(),
-  etag: text('etag'),
-  syncIntervalMinutes: integer('sync_interval_minutes', { mode: 'number' }).notNull().default(15),
-  syncDueAt: integer('sync_due_at', { mode: 'timestamp' }).notNull(),
-  lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }),
-  lastError: text('last_error'),
-  consecutiveFailures: integer('consecutive_failures', { mode: 'number' }).notNull().default(0),
+    .references(() => teams.id),
+  name: text('name').notNull(),
+  unit: text('unit'),
+  direction: text('direction', { enum: ['gte', 'lte', 'range'] }).notNull(),
+  thresholdLow: integer('threshold_low', { mode: 'number' }),
+  thresholdHigh: integer('threshold_high', { mode: 'number' }),
+  currentValue: integer('current_value', { mode: 'number' }).notNull().default(0),
+  currentHealth: text('current_health', { enum: ['healthy', 'warning', 'breach'] }),
+  archivedAt: integer('archived_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+// KPI readings — append-only, mirrors check_ins' shape minus confidence
+export const kpiReadings = sqliteTable('kpi_readings', {
+  id: text('id').primaryKey(),
+  kpiId: text('kpi_id')
+    .notNull()
+    .references(() => kpis.id),
+  value: integer('value', { mode: 'number' }).notNull(),
+  note: text('note'),
+  authorUserId: text('author_user_id').references(() => users.id),
+  source: text('source', { enum: ['ui', 'api', 'github', 'jira'] })
+    .notNull()
+    .default('ui'),
+  apiTokenId: text('api_token_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+// Metric ↔ work-tracker bindings — subject is EXACTLY one of KR or KPI;
+// due-ness lives in SQLite like the reminders watermark. (Physical table
+// name stays kr_links from v1 — logical rename only, no risky rebuild.)
+export const metricLinks = sqliteTable(
+  'kr_links',
+  {
+    id: text('id').primaryKey(),
+    keyResultId: text('key_result_id')
+      .unique()
+      .references(() => keyResults.id),
+    kpiId: text('kpi_id')
+      .unique()
+      .references(() => kpis.id),
+    provider: text('provider', { enum: ['github', 'jira'] }).notNull(),
+    config: text('config').notNull(),
+    mode: text('mode', { enum: ['percent-closed', 'count-closed', 'count'] }).notNull(),
+    secretCiphertext: text('secret_ciphertext').notNull(),
+    etag: text('etag'),
+    syncIntervalMinutes: integer('sync_interval_minutes', { mode: 'number' }).notNull().default(15),
+    syncDueAt: integer('sync_due_at', { mode: 'timestamp' }).notNull(),
+    lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }),
+    lastError: text('last_error'),
+    consecutiveFailures: integer('consecutive_failures', { mode: 'number' }).notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  (t) => [check('metric_links_one_subject', sql`(${t.keyResultId} IS NULL) != (${t.kpiId} IS NULL)`)],
+);
 
 // Reminders — due-ness lives HERE, not in a timer; restarts can't lose it
 export const reminders = sqliteTable('reminders', {

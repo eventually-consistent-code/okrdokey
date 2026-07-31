@@ -13,7 +13,7 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { jiraAdapter } from '../src/connectors/jira.js';
 import { runSync } from '../src/connectors/sync.js';
-import { krLinks } from '../src/db/schema.js';
+import { metricLinks } from '../src/db/schema.js';
 
 const SECRET = 'test-secret-at-least-32-chars-long!!';
 const JIRA_EMAIL = 'bot@example.com';
@@ -207,7 +207,7 @@ describe('jira adapter', () => {
       });
 
       // healthy sweep — no errors left on the links
-      const rows = app.db.select().from(krLinks).all();
+      const rows = app.db.select().from(metricLinks).all();
       expect(rows.every((r) => r.lastError === null && r.consecutiveFailures === 0)).toBe(true);
     } finally {
       await app.close();

@@ -102,13 +102,13 @@
       "updatedAt": "2026-07-31T00:02:32Z"
     },
     "15": {
-      "title": "Backlog: KPI tracking beside OKRs",
-      "bodyHash": "8bf7fa0972c4402c",
+      "title": "v2 REQ: KPI tracking beside OKRs — cycle-less team metrics with computed health",
+      "bodyHash": "a816d614c0f6e987",
       "labels": [
         "backlog"
       ],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:34Z"
+      "state": "in_progress",
+      "updatedAt": "2026-07-31T09:50:52Z"
     },
     "16": {
       "title": "Backlog: AI drafting help for writing good KRs (BYO key)",

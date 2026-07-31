@@ -15,11 +15,11 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
-import { keyResults, krLinks } from '../db/schema.js';
+import { keyResults, metricLinks } from '../db/schema.js';
 import { encryptSecret } from '../lib/secrets.js';
 import { accessibleObjective } from '../okr/access.js';
 
-type LinkRow = typeof krLinks.$inferSelect;
+type LinkRow = typeof metricLinks.$inferSelect;
 
 function toResponse(row: LinkRow): z.infer<typeof krLinkResponseSchema> {
   return {
@@ -90,10 +90,10 @@ export function registerLinkRoutes(app: FastifyInstance, opts: LinkRouteOptions)
         createdAt: now,
       };
       app.db
-        .insert(krLinks)
+        .insert(metricLinks)
         .values(row)
         .onConflictDoUpdate({
-          target: krLinks.keyResultId,
+          target: metricLinks.keyResultId,
           set: {
             provider: row.provider,
             config: row.config,
@@ -107,7 +107,7 @@ export function registerLinkRoutes(app: FastifyInstance, opts: LinkRouteOptions)
           },
         })
         .run();
-      const fresh = app.db.select().from(krLinks).where(eq(krLinks.keyResultId, kr.id)).get();
+      const fresh = app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, kr.id)).get();
       return toResponse(fresh as LinkRow);
     },
   });
@@ -126,7 +126,7 @@ export function registerLinkRoutes(app: FastifyInstance, opts: LinkRouteOptions)
       const user = req.user as { id: string };
       const kr = accessibleKr(req.params.keyResultId, user.id);
       const row = kr
-        ? app.db.select().from(krLinks).where(eq(krLinks.keyResultId, kr.id)).get()
+        ? app.db.select().from(metricLinks).where(eq(metricLinks.keyResultId, kr.id)).get()
         : undefined;
       if (!kr || !row) {
         return reply
@@ -155,7 +155,7 @@ export function registerLinkRoutes(app: FastifyInstance, opts: LinkRouteOptions)
           .status(404)
           .send({ statusCode: 404, error: 'NotFoundError', message: 'no such key result' });
       }
-      app.db.delete(krLinks).where(eq(krLinks.keyResultId, kr.id)).run();
+      app.db.delete(metricLinks).where(eq(metricLinks.keyResultId, kr.id)).run();
       return reply.status(204).send(null);
     },
   });
