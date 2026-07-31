@@ -101,3 +101,108 @@ export const updateMemberRoleRequestSchema = z.object({
 });
 
 export type UpdateMemberRoleRequest = z.infer<typeof updateMemberRoleRequestSchema>;
+
+// Cycles
+
+export const cycleStatusSchema = z.enum(['open', 'closed']);
+
+export const createCycleRequestSchema = z.object({
+  name: z.string().min(1).max(40),
+  startsOn: z.iso.date(),
+  endsOn: z.iso.date(),
+});
+
+export type CreateCycleRequest = z.infer<typeof createCycleRequestSchema>;
+
+export const cycleResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  startsOn: z.iso.date(),
+  endsOn: z.iso.date(),
+  status: cycleStatusSchema,
+});
+
+export type CycleResponse = z.infer<typeof cycleResponseSchema>;
+
+// Key results
+
+export const krTypeSchema = z.enum(['percent', 'numeric', 'boolean']);
+export const confidenceSchema = z.enum(['red', 'yellow', 'green']);
+
+export type Confidence = z.infer<typeof confidenceSchema>;
+
+export const createKeyResultRequestSchema = z.object({
+  title: z.string().min(1).max(160),
+  type: krTypeSchema,
+  unit: z.string().max(16).optional(),
+  baseline: z.number().default(0),
+  target: z.number(),
+});
+
+export type CreateKeyResultRequest = z.infer<typeof createKeyResultRequestSchema>;
+
+export const updateKeyResultRequestSchema = createKeyResultRequestSchema.partial();
+
+export type UpdateKeyResultRequest = z.infer<typeof updateKeyResultRequestSchema>;
+
+export const keyResultResponseSchema = z.object({
+  id: z.string(),
+  objectiveId: z.string(),
+  title: z.string(),
+  type: krTypeSchema,
+  unit: z.string().nullable(),
+  baseline: z.number(),
+  target: z.number(),
+  currentValue: z.number(),
+  currentConfidence: confidenceSchema.nullable(),
+});
+
+export type KeyResultResponse = z.infer<typeof keyResultResponseSchema>;
+
+// Objectives
+
+export const createObjectiveRequestSchema = z.object({
+  title: z.string().min(1).max(160),
+  description: z.string().max(2000).optional(),
+  cycleId: z.string(),
+  teamId: z.string().optional(),
+});
+
+export type CreateObjectiveRequest = z.infer<typeof createObjectiveRequestSchema>;
+
+export const updateObjectiveRequestSchema = z.object({
+  title: z.string().min(1).max(160).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  cycleId: z.string().optional(),
+});
+
+export type UpdateObjectiveRequest = z.infer<typeof updateObjectiveRequestSchema>;
+
+export const objectiveResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  ownerUserId: z.string(),
+  teamId: z.string().nullable(),
+  cycleId: z.string(),
+  archivedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  keyResults: z.array(keyResultResponseSchema),
+});
+
+export type ObjectiveResponse = z.infer<typeof objectiveResponseSchema>;
+
+export const listObjectivesQuerySchema = z.object({
+  cycleId: z.string().optional(),
+  teamId: z.string().optional(),
+  mine: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  includeArchived: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+});
+
+export type ListObjectivesQuery = z.infer<typeof listObjectivesQuerySchema>;
