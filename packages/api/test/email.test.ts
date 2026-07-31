@@ -193,7 +193,31 @@ describe('mailer', () => {
 });
 
 describe('digest content', () => {
-  it('carries roll-up, objectives, and this-week checkers; machine check-ins excluded', () => {
+  it('carries roll-up, objectives, and this-week checkers; machine check-ins excluded', async () => {
+    // plant a machine check-in (no author, connector source) — it must
+    // never appear in the who-checked-in line
+    const { checkIns, keyResults, objectives } = await import('../src/db/schema.js');
+    const teamKr = app.db
+      .select({ id: keyResults.id })
+      .from(keyResults)
+      .innerJoin(objectives, eq(objectives.id, keyResults.objectiveId))
+      .where(eq(objectives.teamId, teamId))
+      .get();
+    app.db
+      .insert(checkIns)
+      .values({
+        id: crypto.randomUUID(),
+        keyResultId: teamKr?.id ?? '',
+        value: 7,
+        confidence: 'green',
+        note: null,
+        authorUserId: null,
+        source: 'github',
+        apiTokenId: null,
+        createdAt: new Date(),
+      })
+      .run();
+
     const content = buildDigest(app, teamId, new Date());
     expect(content).not.toBeNull();
     expect(content?.recipients.sort()).toEqual(['boss@x.com', 'crew@x.com']);
@@ -201,6 +225,8 @@ describe('digest content', () => {
     expect(content?.text).toContain('0.50'); // (6-2)/(10-2)
     expect(content?.text).toContain('boss'); // checked in this week
     expect(content?.subject).toContain('Mailers');
+    // the machine check-in moved the number but names no one
+    expect(content?.text).not.toContain('someone');
   });
 });
 
@@ -254,6 +280,20 @@ describe('digest schedule CRUD + tick', () => {
     const count = sentList().length;
     await runDigestTick(app, mailer, new Date());
     expect(sentList().length).toBe(count);
+  });
+
+  it('disabled schedules never fire', async () => {
+    app.db
+      .update(digestSchedules)
+      .set({ enabled: false, nextDueAt: new Date(Date.now() - 60_000) })
+      .where(eq(digestSchedules.teamId, teamId))
+      .run();
+    const count = sentList().length;
+    const mailer = (app as { mailer: Mailer | null }).mailer as Mailer;
+    await runDigestTick(app, mailer, new Date());
+    expect(sentList().length).toBe(count);
+    // re-enable for later tests
+    app.db.update(digestSchedules).set({ enabled: true, nextDueAt: new Date(Date.now() + 3_600_000) }).where(eq(digestSchedules.teamId, teamId)).run();
   });
 
   it('test-send goes to the caller only', async () => {

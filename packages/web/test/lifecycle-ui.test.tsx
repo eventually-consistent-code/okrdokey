@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DataCard } from '../src/components/data-card.js';
 import { DigestCard } from '../src/components/digest-card.js';
+import { ReminderForm } from '../src/components/reminder-form.js';
 import { RolloverDialog } from '../src/components/rollover-dialog.js';
 
 afterEach(() => {
@@ -158,5 +159,30 @@ describe('DigestCard', () => {
 
     await user.click(screen.getByRole('button', { name: /send me a preview/i }));
     expect(await screen.findByText(/preview sent/i)).toBeDefined();
+  });
+});
+
+describe('ReminderForm email toggle', () => {
+  const stub = (email: boolean): void => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string): Promise<Response> => {
+        if (url === '/health') return Promise.resolve(json({ status: 'ok', version: '0', email }));
+        return Promise.resolve(json([])); // /reminders — none yet
+      }),
+    );
+  };
+
+  it('shows the email checkbox only when SMTP is configured', async () => {
+    stub(true);
+    render(withClient(<ReminderForm teamId="t1" />));
+    expect(await screen.findByTestId('reminder-email-toggle')).toBeDefined();
+    cleanup();
+    vi.unstubAllGlobals();
+
+    stub(false);
+    render(withClient(<ReminderForm teamId="t1" />));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByTestId('reminder-email-toggle')).toBeNull();
   });
 });
