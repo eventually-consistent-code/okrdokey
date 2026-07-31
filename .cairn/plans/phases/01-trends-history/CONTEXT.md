@@ -34,6 +34,17 @@
   12-point `trend` array (values only — no notes, no authors, no
   internal ids), exactly mirroring the existing KPI trend pattern in
   share.ts. Payload extension, not a new endpoint.
+- **Trend lines are RAG-colored (user feedback 2026-07-31)**: every
+  progress/trend line takes its stroke from current state instead of
+  the one hardcoded accent — KR sparklines by the KR's current
+  confidence (last check-in red/yellow/green), the objective TimeLine
+  by objective status (on-track→green, at-risk→yellow, behind→red),
+  KPI sparklines by computed health (on-target→green, off→red).
+  Chart primitives grow a `tone` prop mapping to the rag-* tokens;
+  no state logic inside the primitives — callers decide. Accent stays
+  the fallback for lines with no state (e.g. share page KPIs already
+  passing health). Applies on both the current theme and the metal
+  retheme (rag tokens re-tuned there for AA anyway).
 - **Machined-metal retheme (#24, added 2026-07-31)**: the UI is a
   fully-owned custom theme (Tailwind v4 tokens, no framework) — the
   retheme is a token-values + texture swap, NOT a component rewrite.

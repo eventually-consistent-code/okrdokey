@@ -20,11 +20,16 @@ share payload trend (values only — no notes/ids).
 ### T2 — Charts (web)
 TimeLine SVG primitive (time-spaced x, min/max-normalized y, start/end
 date labels, <2 points → same "not enough" message as Sparkline).
+RAG-colored trend lines: Sparkline + TimeLine grow a `tone`
+('red'|'yellow'|'green', default accent) mapped to rag tokens; wire
+callers — KR sparklines ← currentConfidence, objective TimeLine ←
+status, KPI sparklines ← health.
 Objective page: score-over-time chart from useObjectiveHistory above
 the KR list. Cycles page: "compare cycles" section — last 4 cycles
 via existing useSummary per cycle, avg-score bars + status counts.
 Share page: KR sparklines from the new trend arrays. Done when:
-component tests cover TimeLine rendering + empty state, compare view
+component tests cover TimeLine rendering + empty state, tone→stroke
+mapping (red/yellow/green + default), compare view
 with 2 cycles, share sparkline presence; lint/typecheck clean.
 
 ### T3 — Machined-metal retheme (#24)
