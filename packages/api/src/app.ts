@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -120,6 +121,12 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     transform: jsonSchemaTransform,
   });
   await app.register(swaggerUi, { routePrefix: '/docs' });
+
+  // Rate limiting — global:false means nothing is limited unless a route
+  // opts in via config.rateLimit (public share + login/signup only).
+  // Default keyGenerator uses request.ip, which trustProxy resolves; the
+  // default in-memory store matches the one-process deployment.
+  await app.register(rateLimit, { global: false });
 
   // Every error leaves in the same shared shape
   app.setErrorHandler((err: unknown, _req, reply) => {

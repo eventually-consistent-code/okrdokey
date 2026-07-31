@@ -10,8 +10,10 @@
   scope.
 - **Rate limiting**: `@fastify/rate-limit@11.2.0` pinned, registered
   `global: false` (nothing limited by default). Per-route config only:
-  `/public/:token` GET 60/min per IP; `/auth/login` + `/auth/signup`
-  5/min per IP sharing one bucket (`groupId: 'auth'`). Default
+  `/public/:token` GET 60/min per IP; `/auth/login` and `/auth/signup`
+  each 5/min per IP (separate buckets — groupId does NOT merge counters
+  under the in-memory store; observed empirically, decision updated
+  2026-07-31). Default
   keyGenerator (trustProxy already set) + default in-memory store —
   matches single-process deployment.
 - **Session sweep**: call the existing `DrizzleSessionStore.sweep()`

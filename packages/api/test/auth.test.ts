@@ -24,6 +24,14 @@ function cookieOf(res: { headers: OutgoingHttpHeaders }): string {
 
 const jane = { email: 'jane@example.com', password: 'correct-horse-battery', displayName: 'Jane' };
 
+// each auth call gets its own client IP — login/signup share a 5/min
+// rate bucket per IP and this file makes 8 such calls against one app
+let ipCounter = 0;
+function xff(): Record<string, string> {
+  ipCounter += 1;
+  return { 'x-forwarded-for': `10.99.0.${ipCounter}` };
+}
+
 beforeAll(async () => {
   app = await buildApp({
     dbPath: ':memory:',
@@ -50,14 +58,14 @@ describe('default-deny hook', () => {
 
 describe('signup → login → me → logout', () => {
   it('signs up and starts a session', async () => {
-    const res = await app.inject({ method: 'POST', url: '/auth/signup', payload: jane });
+    const res = await app.inject({ method: 'POST', url: '/auth/signup', payload: jane, headers: xff() });
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ email: jane.email, displayName: 'Jane' });
     expect(cookieOf(res)).toMatch(/^sessionId=/);
   });
 
   it('rejects duplicate signup', async () => {
-    const res = await app.inject({ method: 'POST', url: '/auth/signup', payload: jane });
+    const res = await app.inject({ method: 'POST', url: '/auth/signup', payload: jane, headers: xff() });
     expect(res.statusCode).toBe(409);
   });
 
@@ -66,6 +74,7 @@ describe('signup → login → me → logout', () => {
       method: 'POST',
       url: '/auth/login',
       payload: { email: jane.email, password: jane.password },
+      headers: xff(),
     });
     expect(login.statusCode).toBe(200);
 
@@ -83,6 +92,7 @@ describe('signup → login → me → logout', () => {
       method: 'POST',
       url: '/auth/login',
       payload: { email: jane.email, password: jane.password },
+      headers: xff(),
     });
     const cookie = cookieOf(login);
 
@@ -99,11 +109,13 @@ describe('signup → login → me → logout', () => {
       method: 'POST',
       url: '/auth/login',
       payload: { email: jane.email, password: 'wrong-password-entirely' },
+      headers: xff(),
     });
     const noUser = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email: 'ghost@example.com', password: 'wrong-password-entirely' },
+      headers: xff(),
     });
     expect(badPass.statusCode).toBe(401);
     expect(noUser.statusCode).toBe(401);
@@ -117,7 +129,7 @@ describe('CSRF origin check', () => {
       method: 'POST',
       url: '/auth/login',
       payload: { email: jane.email, password: jane.password },
-      headers: { origin: 'https://evil.example.com', host: 'localhost:3000' },
+      headers: { origin: 'https://evil.example.com', host: 'localhost:3000', ...xff() },
     });
     expect(res.statusCode).toBe(403);
   });
@@ -127,7 +139,7 @@ describe('CSRF origin check', () => {
       method: 'POST',
       url: '/auth/login',
       payload: { email: jane.email, password: jane.password },
-      headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
+      headers: { origin: 'http://localhost:3000', host: 'localhost:3000', ...xff() },
     });
     expect(res.statusCode).toBe(200);
   });

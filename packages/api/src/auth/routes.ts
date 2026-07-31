@@ -44,7 +44,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
   r.route({
     method: 'POST',
     url: '/auth/signup',
-    config: { public: true },
+    config: { public: true, rateLimit: { max: 5, timeWindow: '1 minute' } },
     schema: {
       description: 'Create an account and start a session',
       tags: ['auth'],
@@ -82,7 +82,8 @@ export function registerAuthRoutes(app: FastifyInstance): void {
   r.route({
     method: 'POST',
     url: '/auth/login',
-    config: { public: true },
+    // credential-guessing surface — 5 attempts per IP per minute
+    config: { public: true, rateLimit: { max: 5, timeWindow: '1 minute' } },
     schema: {
       description: 'Log in with email + password',
       tags: ['auth'],

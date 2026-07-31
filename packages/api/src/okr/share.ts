@@ -149,7 +149,8 @@ export function registerShareRoutes(app: FastifyInstance): void {
   r.route({
     method: 'GET',
     url: '/public/:token/summary',
-    config: { public: true },
+    // unauthenticated + guessable-by-brute-force surface — throttle it
+    config: { public: true, rateLimit: { max: 60, timeWindow: '1 minute' } },
     schema: {
       description: 'Read-only team OKR dashboard behind an unguessable token',
       tags: ['share'],

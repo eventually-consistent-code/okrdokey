@@ -17,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@fastify/cookie": "^11.1.2",
+    "@fastify/rate-limit": "^11.2.0",
     "@fastify/session": "^11.1.2",
     "@fastify/static": "^10.1.2",
     "@fastify/swagger": "^9.8.1",
