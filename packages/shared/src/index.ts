@@ -212,9 +212,14 @@ export type ListObjectivesQuery = z.infer<typeof listObjectivesQuerySchema>;
 
 // Check-ins
 
+export const checkInSourceSchema = z.enum(['ui', 'api', 'github', 'jira']);
+
+export type CheckInSource = z.infer<typeof checkInSourceSchema>;
+
+// confidence optional: machine callers may omit it (KR confidence untouched)
 export const createCheckInRequestSchema = z.object({
   value: z.number(),
-  confidence: confidenceSchema,
+  confidence: confidenceSchema.optional(),
   note: z.string().max(1000).optional(),
 });
 
@@ -226,7 +231,8 @@ export const checkInResponseSchema = z.object({
   value: z.number(),
   confidence: confidenceSchema,
   note: z.string().nullable(),
-  authorUserId: z.string(),
+  authorUserId: z.string().nullable(),
+  source: checkInSourceSchema,
   createdAt: z.iso.datetime(),
 });
 
@@ -343,3 +349,78 @@ export const publicSummaryResponseSchema = z.object({
 });
 
 export type PublicSummaryResponse = z.infer<typeof publicSummaryResponseSchema>;
+
+// API tokens
+
+export const createApiTokenRequestSchema = z.object({
+  name: z.string().min(1).max(60),
+});
+
+export type CreateApiTokenRequest = z.infer<typeof createApiTokenRequestSchema>;
+
+export const apiTokenResponseSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  name: z.string(),
+  createdAt: z.iso.datetime(),
+  lastUsedAt: z.iso.datetime().nullable(),
+  revokedAt: z.iso.datetime().nullable(),
+});
+
+export type ApiTokenResponse = z.infer<typeof apiTokenResponseSchema>;
+
+// the ONLY response that ever carries the plaintext token
+export const apiTokenCreatedResponseSchema = apiTokenResponseSchema.extend({
+  token: z.string(),
+});
+
+export type ApiTokenCreatedResponse = z.infer<typeof apiTokenCreatedResponseSchema>;
+
+// KR links (work-tracker bindings)
+
+export const krLinkProviderSchema = z.enum(['github', 'jira']);
+export const krLinkModeSchema = z.enum(['percent-closed', 'count-closed']);
+
+export const githubLinkConfigSchema = z.union([
+  z.object({ repo: z.string().regex(/^[^/\s]+\/[^/\s]+$/), milestoneNumber: z.number().int().positive() }),
+  z.object({ repo: z.string().regex(/^[^/\s]+\/[^/\s]+$/), label: z.string().min(1) }),
+]);
+
+export const jiraLinkConfigSchema = z.object({
+  baseUrl: z.url(),
+  email: z.email(),
+  jql: z.string().min(1).max(500),
+});
+
+export const upsertKrLinkRequestSchema = z.discriminatedUnion('provider', [
+  z.object({
+    provider: z.literal('github'),
+    config: githubLinkConfigSchema,
+    mode: krLinkModeSchema,
+    secret: z.string().min(1),
+    syncIntervalMinutes: z.number().int().min(5).max(1440).default(15),
+  }),
+  z.object({
+    provider: z.literal('jira'),
+    config: jiraLinkConfigSchema,
+    mode: krLinkModeSchema,
+    secret: z.string().min(1),
+    syncIntervalMinutes: z.number().int().min(5).max(1440).default(15),
+  }),
+]);
+
+export type UpsertKrLinkRequest = z.infer<typeof upsertKrLinkRequestSchema>;
+
+export const krLinkResponseSchema = z.object({
+  id: z.string(),
+  keyResultId: z.string(),
+  provider: krLinkProviderSchema,
+  config: z.unknown(),
+  mode: krLinkModeSchema,
+  syncIntervalMinutes: z.number(),
+  lastSyncedAt: z.iso.datetime().nullable(),
+  lastError: z.string().nullable(),
+  consecutiveFailures: z.number(),
+});
+
+export type KrLinkResponse = z.infer<typeof krLinkResponseSchema>;

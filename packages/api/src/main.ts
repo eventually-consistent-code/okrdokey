@@ -19,7 +19,7 @@ const app = await buildApp({
 
 try {
   await app.listen({ port: config.port, host: config.host });
-  startScheduler(app);
+  startScheduler(app, config.sessionSecret);
   app.log.info(`docs live at http://localhost:${config.port}/docs`);
 } catch (err) {
   app.log.error(err);

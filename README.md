@@ -44,6 +44,30 @@ npm run db:generate --workspace packages/api   # emit SQL migration
 npm run db:migrate  --workspace packages/api   # apply (also runs on boot)
 ```
 
+## API tokens
+
+Team admins can mint `okr_…` API tokens (team settings) and push key-result
+values from scripts or CI:
+
+```bash
+curl -X POST -H "Authorization: Bearer okr_..." \
+     -H "content-type: application/json" \
+     -d '{"value": 42}' \
+     http://localhost:3000/key-results/<id>/check-ins
+```
+
+Tokens are shown once, stored hashed, revocable, and only work on the push
+endpoint — a leaked token can't read or change anything else.
+
+Scanning your repos for leaked tokens? Add this to your gitleaks config:
+
+```toml
+[[rules]]
+id = "okrdokey-api-token"
+description = "OKRdokey API token"
+regex = '''okr_[A-Za-z0-9_-]{43}'''
+```
+
 ## License
 
 Apache-2.0.

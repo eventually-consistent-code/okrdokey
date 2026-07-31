@@ -58,6 +58,7 @@ describe('CheckInDialog', () => {
             confidence: 'red',
             note: 'rough week',
             authorUserId: 'u1',
+            source: 'ui',
             createdAt: new Date().toISOString(),
           }),
           { status: 201, headers: { 'content-type': 'application/json' } },

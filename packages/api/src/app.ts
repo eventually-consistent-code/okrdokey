@@ -26,8 +26,10 @@ import {
 import { registerOidcRoutes } from './auth/oidc.js';
 import { addAuthGuard, sessionPlugin } from './auth/plugin.js';
 import { registerAuthRoutes } from './auth/routes.js';
+import { registerTokenRoutes } from './auth/tokens.js';
 import { registerReminderRoutes } from './cadence/reminders.js';
 import type { OidcConfig } from './config.js';
+import { registerLinkRoutes } from './connectors/links.js';
 import { createDb, type Db } from './db/index.js';
 import { registerCheckInRoutes } from './okr/check-ins.js';
 import { registerCycleRoutes } from './okr/cycles.js';
@@ -90,6 +92,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       components: {
         securitySchemes: {
           cookieAuth: { type: 'apiKey', in: 'cookie', name: 'sessionId' },
+          bearerAuth: { type: 'http', scheme: 'bearer', description: 'okr_ team API token' },
         },
       },
     },
@@ -140,6 +143,10 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     registerReminderRoutes(api);
     registerSummaryRoutes(api);
     registerShareRoutes(api);
+    registerTokenRoutes(api);
+    registerLinkRoutes(api, {
+      sessionSecret: opts.sessionSecret ?? 'dev-only-secret-do-not-use-in-production!!',
+    });
 
     // OIDC is opt-in — no config, no routes (they 404), password auth untouched
     if (opts.oidc) {

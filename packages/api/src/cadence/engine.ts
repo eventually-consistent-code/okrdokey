@@ -10,6 +10,8 @@ import { Cron } from 'croner';
 import { and, eq, isNull, lte } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 
+import { adapters } from '../connectors/registry.js';
+import { runSync } from '../connectors/sync.js';
 import { keyResults, objectives, reminders, webhookDeliveries } from '../db/schema.js';
 
 // Constants
@@ -155,12 +157,16 @@ export async function runTick(
 
 // Kicks off the every-minute tick. Called from main.ts AFTER listen —
 // buildApp stays pure so tests never grow a timer. No-op under test.
-export function startScheduler(app: FastifyInstance): Cron | null {
+export function startScheduler(app: FastifyInstance, sessionSecret: string): Cron | null {
   if (process.env.NODE_ENV === 'test') return null;
 
   const job = new Cron('* * * * *', () => {
-    runTick(app, new Date()).catch((err: unknown) => {
+    const now = new Date();
+    runTick(app, now).catch((err: unknown) => {
       app.log.error(err, 'cadence tick failed');
+    });
+    runSync(app, now, { adapters, sessionSecret }).catch((err: unknown) => {
+      app.log.error(err, 'connector sync failed');
     });
   });
   app.log.info('cadence scheduler started (every minute)');

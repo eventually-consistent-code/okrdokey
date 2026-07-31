@@ -16,7 +16,7 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
-import { checkIns, keyResults } from '../db/schema.js';
+import { checkIns, keyResults, objectives } from '../db/schema.js';
 import { accessibleObjective } from './access.js';
 
 type CheckInRow = typeof checkIns.$inferSelect;
@@ -29,6 +29,7 @@ function toResponse(row: CheckInRow): z.infer<typeof checkInResponseSchema> {
     confidence: row.confidence,
     note: row.note,
     authorUserId: row.authorUserId,
+    source: row.source,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -47,24 +48,40 @@ export function registerCheckInRoutes(app: FastifyInstance): void {
   r.route({
     method: 'POST',
     url: '/key-results/:keyResultId/check-ins',
+    config: { allowApiToken: true },
     schema: {
-      description: 'Record a check-in (append-only; also refreshes the KR cache)',
+      description:
+        'Record a check-in (append-only; also refreshes the KR cache). Also the machine ' +
+        'push endpoint: authenticate with a team API token instead of a session — ' +
+        "curl -X POST -H 'Authorization: Bearer okr_…' -H 'content-type: application/json' " +
+        '-d \'{"value": 42}\' https://your-host/key-results/<id>/check-ins',
       tags: ['check-ins'],
-      security: [{ cookieAuth: [] }],
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }],
       params: z.object({ keyResultId: z.string() }),
       body: createCheckInRequestSchema,
       response: { 201: checkInResponseSchema, 404: errorResponseSchema },
     },
     handler: async (req, reply) => {
-      const user = req.user as { id: string };
       const kr = app.db
         .select()
         .from(keyResults)
         .where(eq(keyResults.id, req.params.keyResultId))
         .get();
-      // Access flows through the owning objective — outsiders get the same
-      // 404 a bogus id gets
-      if (!kr || !accessibleObjective(app, kr.objectiveId, user.id)) {
+
+      // Access: session flows through the owning objective; a token must
+      // belong to the objective's team. Everyone else gets the bogus-id 404.
+      let allowed = false;
+      if (kr && req.user) {
+        allowed = accessibleObjective(app, kr.objectiveId, req.user.id) !== null;
+      } else if (kr && req.apiToken) {
+        const obj = app.db
+          .select()
+          .from(objectives)
+          .where(eq(objectives.id, kr.objectiveId))
+          .get();
+        allowed = !!obj && obj.teamId === req.apiToken.teamId;
+      }
+      if (!kr || !allowed) {
         return reply
           .status(404)
           .send({ statusCode: 404, error: 'NotFoundError', message: 'no such key result' });
@@ -72,14 +89,18 @@ export function registerCheckInRoutes(app: FastifyInstance): void {
 
       const { confidence, note } = req.body;
       const value = normalizeValue(kr.type, req.body.value);
+      // machine pushes may omit confidence — the human signal stays put
+      const effectiveConfidence = confidence ?? kr.currentConfidence;
       const now = new Date();
       const row: CheckInRow = {
         id: crypto.randomUUID(),
         keyResultId: kr.id,
         value,
-        confidence,
+        confidence: effectiveConfidence ?? 'green',
         note: note ?? null,
-        authorUserId: user.id,
+        authorUserId: req.user?.id ?? null,
+        source: req.user ? 'ui' : 'api',
+        apiTokenId: req.apiToken?.id ?? null,
         createdAt: now,
       };
 
@@ -87,7 +108,12 @@ export function registerCheckInRoutes(app: FastifyInstance): void {
       app.db.transaction((tx) => {
         tx.insert(checkIns).values(row).run();
         tx.update(keyResults)
-          .set({ currentValue: value, currentConfidence: confidence, updatedAt: now })
+          .set({
+            currentValue: value,
+            // only move confidence when the caller actually sent one
+            ...(confidence !== undefined ? { currentConfidence: confidence } : {}),
+            updatedAt: now,
+          })
           .where(eq(keyResults.id, kr.id))
           .run();
       });

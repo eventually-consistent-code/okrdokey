@@ -95,7 +95,8 @@ export const keyResults = sqliteTable('key_results', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
-// Check-ins — append-only; history is the truth, KR carries the cache
+// Check-ins — append-only; history is the truth, KR carries the cache.
+// Machines check in too: author nullable, source says who wrote it.
 export const checkIns = sqliteTable('check_ins', {
   id: text('id').primaryKey(),
   keyResultId: text('key_result_id')
@@ -104,9 +105,48 @@ export const checkIns = sqliteTable('check_ins', {
   value: integer('value', { mode: 'number' }).notNull(),
   confidence: text('confidence', { enum: ['red', 'yellow', 'green'] }).notNull(),
   note: text('note'),
-  authorUserId: text('author_user_id')
+  authorUserId: text('author_user_id').references(() => users.id),
+  source: text('source', { enum: ['ui', 'api', 'github', 'jira'] })
+    .notNull()
+    .default('ui'),
+  apiTokenId: text('api_token_id'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// API tokens — okr_-prefixed, only the sha256 ever touches disk
+export const apiTokens = sqliteTable('api_tokens', {
+  id: text('id').primaryKey(),
+  teamId: text('team_id')
+    .notNull()
+    .references(() => teams.id),
+  name: text('name').notNull(),
+  tokenHash: text('token_hash').notNull().unique(),
+  createdByUserId: text('created_by_user_id')
     .notNull()
     .references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+});
+
+// KR ↔ work-tracker bindings — one per KR; due-ness lives in SQLite like
+// the reminders watermark
+export const krLinks = sqliteTable('kr_links', {
+  id: text('id').primaryKey(),
+  keyResultId: text('key_result_id')
+    .notNull()
+    .unique()
+    .references(() => keyResults.id),
+  provider: text('provider', { enum: ['github', 'jira'] }).notNull(),
+  config: text('config').notNull(),
+  mode: text('mode', { enum: ['percent-closed', 'count-closed'] }).notNull(),
+  secretCiphertext: text('secret_ciphertext').notNull(),
+  etag: text('etag'),
+  syncIntervalMinutes: integer('sync_interval_minutes', { mode: 'number' }).notNull().default(15),
+  syncDueAt: integer('sync_due_at', { mode: 'timestamp' }).notNull(),
+  lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }),
+  lastError: text('last_error'),
+  consecutiveFailures: integer('consecutive_failures', { mode: 'number' }).notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
