@@ -39,4 +39,18 @@ describe('Sparkline', () => {
     const { getByText } = render(<Sparkline values={[1]} />);
     expect(getByText(/not enough check-ins/i)).toBeDefined();
   });
+
+  it('tone drives the stroke; accent is the fallback', () => {
+    for (const [tone, cssVar] of [
+      ['red', '--color-rag-red'],
+      ['yellow', '--color-rag-yellow'],
+      ['green', '--color-rag-green'],
+    ] as const) {
+      const { container, unmount } = render(<Sparkline values={[1, 2]} tone={tone} />);
+      expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe(`var(${cssVar})`);
+      unmount();
+    }
+    const { container } = render(<Sparkline values={[1, 2]} />);
+    expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe('var(--color-ember)');
+  });
 });

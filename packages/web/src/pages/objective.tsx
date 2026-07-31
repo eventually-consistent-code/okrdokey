@@ -45,7 +45,7 @@ function KeyResultRow({
             {kr.unit ?? ''}
           </p>
           <div className="mt-2 max-w-xs">
-            <Sparkline values={trend} />
+            <Sparkline values={trend} tone={kr.currentConfidence} />
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

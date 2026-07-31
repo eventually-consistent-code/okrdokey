@@ -9,12 +9,18 @@ import type { KpiHealthState } from '@okrdokey/shared';
 import type { ReactNode } from 'react';
 
 import { Card } from './bits.js';
-import { Sparkline } from './charts.js';
+import { Sparkline, type SparkTone } from './charts.js';
 
 const HEALTH_COLOR: Record<KpiHealthState, string> = {
   healthy: 'bg-rag-green',
   warning: 'bg-rag-yellow',
   breach: 'bg-rag-red',
+};
+
+const HEALTH_TONE: Record<KpiHealthState, SparkTone> = {
+  healthy: 'green',
+  warning: 'yellow',
+  breach: 'red',
 };
 
 export interface KpiStripItem {
@@ -47,7 +53,7 @@ export function KpiStrip({ items }: { items: KpiStripItem[] }): ReactNode {
             <span className="text-sm text-ink-soft">{k.unit ?? ''}</span>
           </p>
           <div className="mt-2">
-            <Sparkline values={k.trend} />
+            <Sparkline values={k.trend} tone={k.currentHealth ? HEALTH_TONE[k.currentHealth] : null} />
           </div>
         </Card>
       ))}

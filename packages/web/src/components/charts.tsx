@@ -50,7 +50,17 @@ export function StatusDonut({ counts }: { counts: [number, number, number] }): R
   );
 }
 
-export function Sparkline({ values }: { values: number[] }): ReactNode {
+// trend lines carry state: callers map confidence/health/status to a tone;
+// no state logic in here — accent is the tone-less fallback
+export type SparkTone = 'red' | 'yellow' | 'green';
+
+const TONE_STROKE: Record<SparkTone, string> = {
+  red: 'var(--color-rag-red)',
+  yellow: 'var(--color-rag-yellow)',
+  green: 'var(--color-rag-green)',
+};
+
+export function Sparkline({ values, tone }: { values: number[]; tone?: SparkTone | null }): ReactNode {
   if (values.length < 2) {
     return <span className="text-xs text-ink-soft">not enough check-ins for a trend yet…</span>;
   }
@@ -60,9 +70,10 @@ export function Sparkline({ values }: { values: number[] }): ReactNode {
   const pts = values
     .map((v, i) => `${(i / (values.length - 1)) * 100},${28 - ((v - min) / span) * 24}`)
     .join(' ');
+  const stroke = tone ? TONE_STROKE[tone] : 'var(--color-ember)';
   return (
     <svg viewBox="0 0 100 32" className="h-8 w-full" preserveAspectRatio="none" role="img" aria-label="check-in trend">
-      <polyline points={pts} fill="none" stroke="var(--color-ember)" strokeWidth="1.5" />
+      <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.5" />
     </svg>
   );
 }

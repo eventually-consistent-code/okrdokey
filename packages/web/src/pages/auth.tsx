@@ -35,7 +35,7 @@ function useOidcAvailable(): boolean {
 
 function AuthFrame({ children, title }: { children: ReactNode; title: string }): ReactNode {
   return (
-    <div className="mx-auto mt-24 max-w-sm rise">
+    <div className="mx-auto max-w-sm pt-24 rise">
       <h1 className="mb-1 font-display text-5xl font-bold tracking-tight">
         OKRdokey<span className="text-ember">.</span>
       </h1>

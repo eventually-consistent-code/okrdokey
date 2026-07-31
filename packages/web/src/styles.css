@@ -1,32 +1,43 @@
 /**
- * OKRdokey — "field ledger" theme. Warm paper, ink text, one ember accent,
+ * OKRdokey — "machined instrument panel" theme. Milled-aluminum surfaces,
+ * a fine perforated-grate backdrop, gunmetal text, one steel-blue accent,
  * RAG dots as the only other color in the room. Numbers are the star:
- * tabular mono everywhere a score lives.
+ * tabular mono everywhere a score lives. Token NAMES are load-bearing
+ * (components reference paper/ink/ember/line) — only the values changed
+ * when the ledger became a machine.
  * Author(s): John Reed
  */
 
 @import 'tailwindcss';
-@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource/chakra-petch/400.css';
+@import '@fontsource/chakra-petch/500.css';
+@import '@fontsource/chakra-petch/600.css';
+@import '@fontsource/chakra-petch/700.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/600.css';
 
 @theme {
-  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, sans-serif;
+  --font-display: 'Chakra Petch', ui-sans-serif, sans-serif;
   --font-ledger: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --color-paper: #faf6ef;
-  --color-paper-raised: #fffdf8;
-  --color-ink: #1c1a17;
-  --color-ink-soft: #6b6459;
-  --color-line: #e5ddcd;
-  --color-ember: #d95d39;
-  --color-ember-deep: #b84a2b;
+  /* silver / grey / blue — cool all the way down */
+  --color-paper: #ccd2d9;
+  --color-paper-raised: #eceff2;
+  --color-ink: #171c23;
+  --color-ink-soft: #55606e;
+  --color-line: #a8b1bc;
+  --color-ember: #2f6395; /* steel blue — the one accent */
+  --color-ember-deep: #234b73;
 
-  --color-rag-red: #c93b2e;
-  --color-rag-yellow: #d9a13b;
-  --color-rag-green: #3f7d4e;
+  --color-rag-red: #b13226;
+  --color-rag-yellow: #96700d;
+  --color-rag-green: #2c7043;
 
-  --shadow-card: 0 1px 2px rgb(28 26 23 / 0.06), 0 4px 16px rgb(28 26 23 / 0.05);
+  /* machined edge: crisp drop + a hairline top bevel highlight */
+  --shadow-card:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 1px 2px rgb(23 28 35 / 0.14),
+    0 6px 18px rgb(23 28 35 / 0.1);
 }
 
 html {
@@ -35,16 +46,30 @@ html {
   font-family: var(--font-display);
 }
 
-/* faint ruled-paper texture — the ledger under everything */
+/* fine perforated grate over a soft overhead sheen — the metal under everything */
 body {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 31px,
-    rgb(28 26 23 / 0.025) 31px,
-    rgb(28 26 23 / 0.025) 32px
-  );
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(23 28 35 / 0.09) 1px, transparent 1.5px),
+    linear-gradient(180deg, rgb(255 255 255 / 0.45) 0%, rgb(255 255 255 / 0) 240px),
+    linear-gradient(180deg, var(--color-paper), #c3c9d1);
+  background-size:
+    7px 7px,
+    100% 100%,
+    100% 100%;
   min-height: 100vh;
+}
+
+/* raised panels read as brushed aluminum: hairline horizontal grain + sheen */
+.shadow-card {
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.5) 0px,
+      rgb(255 255 255 / 0.5) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(180deg, #f2f4f7 0%, var(--color-paper-raised) 55%, #e4e8ed 100%);
 }
 
 .ledger-num {
