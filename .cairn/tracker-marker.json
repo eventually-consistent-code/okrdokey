@@ -179,6 +179,15 @@
       ],
       "state": "open",
       "updatedAt": "2026-07-31T11:58:24Z"
+    },
+    "24": {
+      "title": "v3: Machined-metal UI theme — brushed steel, mesh, silver/grey/blue",
+      "bodyHash": "cc360b3294f697aa",
+      "labels": [
+        "v3"
+      ],
+      "state": "closed",
+      "updatedAt": "2026-07-31T12:31:15Z"
     }
   },
   "phases": {
