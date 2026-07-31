@@ -106,6 +106,5 @@ Apache-2.0.
 # - OKR core: objectives, key results, check-in cadence, scoring (phase 3)
 # - web UI + public read-only dashboard (phase 4)
 # - KR auto-update API, GitHub + Jira connectors (phase 5)
-# - slim the Docker image down
 
 More to come...

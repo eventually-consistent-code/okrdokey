@@ -25,9 +25,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/api/package.json packages/api/
-COPY packages/web/package.json packages/web/
+# api + shared only — the web app ships as a built dist, its runtime deps
+# (react, tanstack, radix…) have no business in the container (~35MB)
 # better-sqlite3 ships prebuilt binaries inside the package — no scripts needed
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts -w packages/api -w packages/shared && npm cache clean --force
 
 # --- runtime stage ---
 FROM node:22-trixie-slim
