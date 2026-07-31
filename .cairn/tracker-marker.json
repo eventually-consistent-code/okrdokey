@@ -159,8 +159,8 @@
       "labels": [
         "v3"
       ],
-      "state": "open",
-      "updatedAt": "2026-07-31T11:58:13Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T14:17:21Z"
     },
     "22": {
       "title": "v3: CSV import/export — the migration path in and out",
@@ -168,8 +168,8 @@
       "labels": [
         "v3"
       ],
-      "state": "open",
-      "updatedAt": "2026-07-31T11:58:19Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T14:17:32Z"
     },
     "23": {
       "title": "v3: Email digests — optional SMTP for teams not living in Slack",
