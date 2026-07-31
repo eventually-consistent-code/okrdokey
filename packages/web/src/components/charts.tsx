@@ -60,6 +60,51 @@ const TONE_STROKE: Record<SparkTone, string> = {
   green: 'var(--color-rag-green)',
 };
 
+export const STATUS_TONE: Record<'on-track' | 'at-risk' | 'behind', SparkTone> = {
+  'on-track': 'green',
+  'at-risk': 'yellow',
+  behind: 'red',
+};
+
+/**
+ * Score-over-time line — time-spaced x (real timestamps, not indexes),
+ * fixed 0..1 y domain so the line reads as absolute progress, start/end
+ * date labels underneath. Same tone contract as Sparkline.
+ */
+export function TimeLine({
+  points,
+  tone,
+}: {
+  points: { createdAt: string; score: number }[];
+  tone?: SparkTone | null;
+}): ReactNode {
+  if (points.length < 2) {
+    return <span className="text-xs text-ink-soft">not enough check-ins for a trend yet…</span>;
+  }
+  const times = points.map((p) => Date.parse(p.createdAt));
+  const t0 = times[0] ?? 0;
+  const t1 = times[times.length - 1] ?? 1;
+  const span = t1 - t0 || 1;
+  const pts = points
+    .map((p, i) => `${(((times[i] ?? t0) - t0) / span) * 100},${34 - p.score * 30}`)
+    .join(' ');
+  const stroke = tone ? TONE_STROKE[tone] : 'var(--color-ember)';
+  const fmt = (t: number): string => new Date(t).toISOString().slice(0, 10);
+  return (
+    <div>
+      <svg viewBox="0 0 100 36" className="h-20 w-full" preserveAspectRatio="none" role="img" aria-label="score over time">
+        <line x1="0" y1="4" x2="100" y2="4" stroke="var(--color-line)" strokeWidth="0.3" />
+        <line x1="0" y1="34" x2="100" y2="34" stroke="var(--color-line)" strokeWidth="0.3" />
+        <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.2" />
+      </svg>
+      <div className="ledger-num flex justify-between text-[10px] text-ink-soft">
+        <span>{fmt(t0)}</span>
+        <span>{fmt(t1)}</span>
+      </div>
+    </div>
+  );
+}
+
 export function Sparkline({ values, tone }: { values: number[]; tone?: SparkTone | null }): ReactNode {
   if (values.length < 2) {
     return <span className="text-xs text-ink-soft">not enough check-ins for a trend yet…</span>;

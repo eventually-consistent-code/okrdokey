@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 afterEach(cleanup);
 
-import { Sparkline, StatusDonut } from '../src/components/charts.js';
+import { Sparkline, StatusDonut, TimeLine } from '../src/components/charts.js';
 
 describe('StatusDonut', () => {
   it('renders one segment per non-zero bucket and the total in the middle', () => {
@@ -52,5 +52,37 @@ describe('Sparkline', () => {
     }
     const { container } = render(<Sparkline values={[1, 2]} />);
     expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe('var(--color-ember)');
+  });
+});
+
+describe('TimeLine', () => {
+  const pts = [
+    { createdAt: '2026-07-01T00:00:00.000Z', score: 0 },
+    { createdAt: '2026-07-08T00:00:00.000Z', score: 0.5 },
+    { createdAt: '2026-07-31T00:00:00.000Z', score: 1 },
+  ];
+
+  it('spaces points by time, not index', () => {
+    const { container } = render(<TimeLine points={pts} />);
+    const xs = (container.querySelector('polyline')?.getAttribute('points') ?? '')
+      .split(' ')
+      .map((p) => Number(p.split(',')[0]));
+    // 7 days of 30 → ~23%, decidedly not the midpoint an index axis would give
+    expect(xs[0]).toBe(0);
+    expect(xs[1]).toBeGreaterThan(20);
+    expect(xs[1]).toBeLessThan(28);
+    expect(xs[2]).toBe(100);
+  });
+
+  it('labels the span and takes a tone', () => {
+    const { container, getByText } = render(<TimeLine points={pts} tone="green" />);
+    expect(getByText('2026-07-01')).toBeDefined();
+    expect(getByText('2026-07-31')).toBeDefined();
+    expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe('var(--color-rag-green)');
+  });
+
+  it('degrades below two points', () => {
+    const { getByText } = render(<TimeLine points={[pts[0]!]} />);
+    expect(getByText(/not enough check-ins/i)).toBeDefined();
   });
 });

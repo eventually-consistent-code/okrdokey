@@ -52,6 +52,13 @@ test('signup → cycle → objective → check-in → dashboard', async ({ page 
   // score lands at 0.50
   await expect(page.getByText('0.50').first()).toBeVisible();
 
+  // second check-in at the same value: score holds, the trend line appears
+  await page.getByRole('button', { name: 'check in' }).click();
+  await page.getByLabel(/current value/i).fill('3.5');
+  await page.getByRole('radio', { name: 'on it' }).click();
+  await page.getByRole('button', { name: 'save check-in' }).click();
+  await expect(page.getByRole('img', { name: 'score over time' })).toBeVisible();
+
   // guided path: the wizard teaches, prefills, and creates
   await page.getByRole('button', { name: 'guide me' }).click();
   await expect(page.getByText(/a number that changes/i)).toBeVisible();
@@ -68,6 +75,8 @@ test('signup → cycle → objective → check-in → dashboard', async ({ page 
   await page.getByRole('link', { name: 'dashboard' }).click();
   await expect(page.getByText('Reduce churn')).toBeVisible();
   await expect(page.getByText('0.25').first()).toBeVisible();
+  // the row carries a status-toned mini trend
+  await expect(page.getByRole('img', { name: 'check-in trend' }).first()).toBeVisible();
 
   // deep-link refresh survives the SPA fallback
   await page.reload();

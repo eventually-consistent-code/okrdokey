@@ -10,12 +10,25 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { Button, Card, RagDot, Score, StatusStamp } from '../components/bits.js';
+import { STATUS_TONE, TimeLine } from '../components/charts.js';
 import { Sparkline } from '../components/charts.js';
 import { CheckInDialog } from '../components/check-in-dialog.js';
 import { LinkCard } from '../components/link-card.js';
 import { KrWizard } from '../components/kr-wizard.js';
 import { NewKeyResultForm } from '../components/new-key-result.js';
-import { useArchiveObjective, useCheckIns, useObjective } from '../queries.js';
+import { useArchiveObjective, useCheckIns, useObjective, useObjectiveHistory } from '../queries.js';
+
+function ProgressCard({ objectiveId, status }: { objectiveId: string; status: 'on-track' | 'at-risk' | 'behind' }): ReactNode {
+  const history = useObjectiveHistory(objectiveId);
+  const points = history.data?.points ?? [];
+  if (points.length < 2) return null;
+  return (
+    <Card className="rise">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">progress</p>
+      <TimeLine points={points} tone={STATUS_TONE[status]} />
+    </Card>
+  );
+}
 
 function KeyResultRow({
   kr,
@@ -92,6 +105,8 @@ export function ObjectivePage(): ReactNode {
           <Score value={o.score} size="lg" />
         </div>
       </div>
+
+      <ProgressCard objectiveId={o.id} status={o.status} />
 
       <div className="space-y-3">
         {o.keyResults.length === 0 ? (

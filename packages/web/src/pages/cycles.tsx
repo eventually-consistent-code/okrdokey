@@ -11,7 +11,35 @@ import { useState } from 'react';
 
 import { apiFetch, ApiError } from '../api.js';
 import { Button, Card, Field } from '../components/bits.js';
-import { useCycles } from '../queries.js';
+import { useCycles, useSummary } from '../queries.js';
+
+// One row of the compare strip — avg score bar + status counts, all from
+// the summary endpoint this page already had access to
+function CompareRow({ cycleId, name }: { cycleId: string; name: string }): ReactNode {
+  const summary = useSummary(cycleId);
+  const s = summary.data;
+  if (!s || s.objectives.length === 0) return null;
+  const avg = s.objectives.reduce((sum, o) => sum + o.score, 0) / s.objectives.length;
+  const counts = {
+    'on-track': s.objectives.filter((o) => o.status === 'on-track').length,
+    'at-risk': s.objectives.filter((o) => o.status === 'at-risk').length,
+    behind: s.objectives.filter((o) => o.status === 'behind').length,
+  };
+  return (
+    <div className="flex items-center gap-3">
+      <span className="ledger-num w-20 shrink-0 text-xs font-semibold">{name}</span>
+      <div className="h-3 flex-1 border border-line bg-paper">
+        <div className="h-full bg-ember" style={{ width: `${Math.round(avg * 100)}%` }} />
+      </div>
+      <span className="ledger-num w-10 text-right text-xs">{avg.toFixed(2)}</span>
+      <span className="ledger-num w-24 shrink-0 text-right text-[10px] text-ink-soft">
+        <span className="text-rag-green">{counts['on-track']}</span> ·{' '}
+        <span className="text-rag-yellow">{counts['at-risk']}</span> ·{' '}
+        <span className="text-rag-red">{counts.behind}</span>
+      </span>
+    </div>
+  );
+}
 
 export function CyclesPage(): ReactNode {
   const cycles = useCycles();
@@ -38,9 +66,23 @@ export function CyclesPage(): ReactNode {
     },
   });
 
+  // newest-first list, compare strip takes the most recent four
+  const recent = (cycles.data ?? []).slice(0, 4);
+
   return (
     <div className="space-y-5">
       <h1 className="text-3xl font-bold tracking-tight">Cycles</h1>
+
+      {recent.length >= 2 ? (
+        <Card className="rise space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            cycle over cycle — avg score · on-track / at-risk / behind
+          </p>
+          {recent.map((c) => (
+            <CompareRow key={c.id} cycleId={c.id} name={c.name} />
+          ))}
+        </Card>
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-3">
         {cycles.data?.map((c) => (

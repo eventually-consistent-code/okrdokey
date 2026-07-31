@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 
 import { apiFetch } from '../api.js';
 import { Card, RagDot, Score, StatusStamp } from '../components/bits.js';
+import { Sparkline } from '../components/charts.js';
 import { KpiStrip } from '../components/kpi-strip.js';
 
 export function SharePage(): ReactNode {
@@ -74,15 +75,22 @@ export function SharePage(): ReactNode {
                   </div>
                   <ul className="mt-3 space-y-1">
                     {o.keyResults.map((kr) => (
-                      <li key={kr.title} className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2">
+                      <li key={kr.title} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-center gap-2">
                           <RagDot confidence={kr.currentConfidence} />
                           {kr.title}
                         </span>
-                        <span className="ledger-num text-xs text-ink-soft">
-                          {kr.currentValue}
-                          {kr.unit ?? ''} / {kr.target}
-                          {kr.unit ?? ''} · {kr.score.toFixed(2)}
+                        <span className="flex shrink-0 items-center gap-3">
+                          {kr.trend.length >= 2 ? (
+                            <span className="w-20">
+                              <Sparkline values={kr.trend} tone={kr.currentConfidence} />
+                            </span>
+                          ) : null}
+                          <span className="ledger-num text-xs text-ink-soft">
+                            {kr.currentValue}
+                            {kr.unit ?? ''} / {kr.target}
+                            {kr.unit ?? ''} · {kr.score.toFixed(2)}
+                          </span>
                         </span>
                       </li>
                     ))}

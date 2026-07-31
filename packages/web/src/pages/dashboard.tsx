@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { Button, Card, Score, StatusStamp } from '../components/bits.js';
-import { StatusDonut } from '../components/charts.js';
+import { Sparkline, STATUS_TONE, StatusDonut } from '../components/charts.js';
 import { NewObjectiveDialog } from '../components/new-objective.js';
 import { useCycles, useSummary } from '../queries.js';
 
@@ -110,6 +110,11 @@ export function DashboardPage(): ReactNode {
                       <p className="text-xs text-ink-soft">{o.teamId ? 'team' : 'personal'}</p>
                     </div>
                     <div className="flex items-center gap-3">
+                      {o.trend.length >= 2 ? (
+                        <div className="w-24">
+                          <Sparkline values={o.trend} tone={STATUS_TONE[o.status]} />
+                        </div>
+                      ) : null}
                       <StatusStamp status={o.status} />
                       <Score value={o.score} />
                     </div>

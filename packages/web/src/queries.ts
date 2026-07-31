@@ -6,6 +6,7 @@
 
 import {
   aiKeyResponseSchema,
+  objectiveHistoryResponseSchema,
   aiStatusResponseSchema,
   checkInResponseSchema,
   createCheckInRequestSchema,
@@ -121,6 +122,7 @@ export function useCheckInMutation(krId: string, objectiveId: string) {
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['objective', objectiveId] });
+      void qc.invalidateQueries({ queryKey: ['objective-history', objectiveId] });
       void qc.invalidateQueries({ queryKey: ['check-ins', krId] });
       void qc.invalidateQueries({ queryKey: ['summary'] });
       void qc.invalidateQueries({ queryKey: ['objectives'] });
@@ -258,6 +260,13 @@ export function useArchiveKpi(teamId: string) {
     mutationFn: (kpiId: string) =>
       apiFetch(`/kpis/${kpiId}/archive`, kpiResponseSchema, { method: 'POST' }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['kpis', teamId] }),
+  });
+}
+
+export function useObjectiveHistory(objectiveId: string) {
+  return useQuery({
+    queryKey: ['objective-history', objectiveId],
+    queryFn: () => apiFetch(`/objectives/${objectiveId}/history`, objectiveHistoryResponseSchema),
   });
 }
 
