@@ -75,8 +75,8 @@
       "title": "REQ-11: One-command deploy — docker compose up",
       "bodyHash": "1cf74b5a12281707",
       "labels": [],
-      "state": "open",
-      "updatedAt": "2026-07-31T00:02:21Z"
+      "state": "in_progress",
+      "updatedAt": "2026-07-31T00:13:00Z"
     },
     "12": {
       "title": "REQ-12: Public read-only dashboard — per-team share link",

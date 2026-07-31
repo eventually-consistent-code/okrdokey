@@ -1,0 +1,16 @@
+########################
+# Compose by John Reed #
+# 2026-07-30           #
+########################
+#
+# The whole deploy story: docker compose up. Data lives in ./data —
+# backup = copy one file.
+
+services:
+  okrdokey:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

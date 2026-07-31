@@ -22,7 +22,10 @@ export interface DbHandle {
   close: () => void;
 }
 
-const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'drizzle');
+// Overridable for bundled deploys (Docker sets MIGRATIONS_DIR=/app/drizzle)
+const MIGRATIONS_DIR =
+  process.env.MIGRATIONS_DIR ??
+  join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'drizzle');
 
 // Opens the db (":memory:" works for tests), runs migrations, returns client
 export function createDb(dbPath: string): DbHandle {
