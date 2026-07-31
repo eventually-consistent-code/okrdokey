@@ -278,7 +278,8 @@ export const statusCountsSchema = z.object({
 
 export type StatusCounts = z.infer<typeof statusCountsSchema>;
 
-// One objective as the summary sees it — scores only, no KR payload
+// One objective as the summary sees it — scores only, no KR payload.
+// trend = last 12 event scores so dashboards draw lines without extra calls
 export const summaryObjectiveSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -286,6 +287,7 @@ export const summaryObjectiveSchema = z.object({
   ownerUserId: z.string(),
   score: z.number(),
   status: objectiveStatusSchema,
+  trend: z.array(z.number()).default([]),
 });
 
 export type SummaryObjective = z.infer<typeof summaryObjectiveSchema>;
@@ -309,6 +311,30 @@ export const cycleSummaryResponseSchema = z.object({
 
 export type CycleSummaryResponse = z.infer<typeof cycleSummaryResponseSchema>;
 
+// Objective history — score-over-time reconstructed from check-ins.
+// Series uses CURRENT baseline/target; a numeric KR edited after
+// check-ins makes earlier points approximate.
+
+export const historyPointSchema = z.object({
+  createdAt: z.iso.datetime(),
+  score: z.number(),
+});
+
+export const krHistorySchema = z.object({
+  keyResultId: z.string(),
+  title: z.string(),
+  points: z.array(
+    z.object({ createdAt: z.iso.datetime(), value: z.number(), score: z.number() }),
+  ),
+});
+
+export const objectiveHistoryResponseSchema = z.object({
+  points: z.array(historyPointSchema),
+  perKr: z.array(krHistorySchema),
+});
+
+export type ObjectiveHistoryResponse = z.infer<typeof objectiveHistoryResponseSchema>;
+
 // Public share link
 
 export const shareTokenResponseSchema = z.object({
@@ -328,6 +354,7 @@ export const publicKeyResultSchema = z.object({
   target: z.number(),
   score: z.number(),
   currentConfidence: confidenceSchema.nullable(),
+  trend: z.array(z.number()).default([]),
 });
 
 export const publicObjectiveSchema = z.object({

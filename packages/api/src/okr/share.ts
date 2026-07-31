@@ -20,6 +20,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
 import {
+  checkIns,
   cycles,
   keyResults,
   kpiReadings,
@@ -248,6 +249,16 @@ export function registerShareRoutes(app: FastifyInstance): void {
                     target: k.target,
                     score: round2(scores[i] ?? 0),
                     currentConfidence: k.currentConfidence,
+                    // values only — same narrow-payload rule as KPI trends
+                    trend: app.db
+                      .select({ value: checkIns.value })
+                      .from(checkIns)
+                      .where(eq(checkIns.keyResultId, k.id))
+                      .orderBy(desc(checkIns.createdAt), desc(rawSql`rowid`))
+                      .limit(12)
+                      .all()
+                      .map((c) => c.value)
+                      .reverse(),
                   })),
                 };
               }),

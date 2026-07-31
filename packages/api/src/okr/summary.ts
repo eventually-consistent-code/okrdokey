@@ -19,6 +19,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
 import { cycles, keyResults, objectives, teamMembers, teams } from '../db/schema.js';
+import { objectiveTrend } from './history.js';
 import {
   cycleElapsedFraction,
   krScore,
@@ -101,6 +102,7 @@ export function registerSummaryRoutes(app: FastifyInstance): void {
             elapsed,
             worstConfidence(krs.map((kr) => kr.currentConfidence)),
           ),
+          trend: objectiveTrend(app, o.id),
         };
       });
 
