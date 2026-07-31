@@ -1,0 +1,18 @@
+{
+  "tracker": {
+    "type": "github",
+    "config": { "repo": "eventually-consistent-code/okrdokey" }
+  },
+  "agents": { "model": "auto" },
+  "continuity": {
+    "resume": "prompt",
+    "checkpoint": true,
+    "wipCommits": false,
+    "recallIndex": { "enabled": true, "maxCards": 20 }
+  },
+  "leakGuard": {
+    "enabled": true,
+    "allow": [],
+    "extraPatterns": []
+  }
+}

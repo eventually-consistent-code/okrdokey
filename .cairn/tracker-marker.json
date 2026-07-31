@@ -1,0 +1,129 @@
+{
+  "lastScan": "2026-07-30T08:29:58.458Z",
+  "issues": {
+    "1": {
+      "title": "REQ-07: Documented REST API + persistent storage",
+      "bodyHash": "3948de8f1b9cd9a1",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:26:49Z"
+    },
+    "2": {
+      "title": "REQ-04: Multi-user auth — accounts, sessions, ownership",
+      "bodyHash": "c438db6e765cc28d",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:26:53Z"
+    },
+    "3": {
+      "title": "REQ-05: Teams — membership, personal and team OKRs",
+      "bodyHash": "4bfc3299b3cc3d78",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:26:54Z"
+    },
+    "4": {
+      "title": "REQ-01: OKR CRUD — objectives with key results",
+      "bodyHash": "c147f54f4cc83dd9",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:26:55Z"
+    },
+    "5": {
+      "title": "REQ-02: Check-in cadence engine — reminders, confidence, history",
+      "bodyHash": "8289eff668d52b5e",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:38Z"
+    },
+    "6": {
+      "title": "REQ-03: Scoring and status roll-up per cycle",
+      "bodyHash": "4cea71457eb9eb6a",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:26:59Z"
+    },
+    "7": {
+      "title": "REQ-06: Web UI covering all flows",
+      "bodyHash": "05ca8a258525c695",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-30T08:27:01Z"
+    },
+    "8": {
+      "title": "REQ-08: KR auto-update API — scoped tokens + push endpoint",
+      "bodyHash": "0ecb7b0b8087b105",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:14Z"
+    },
+    "9": {
+      "title": "REQ-09: GitHub connector — KR bound to issue/milestone progress",
+      "bodyHash": "88a7cb8894c6d625",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:17Z"
+    },
+    "10": {
+      "title": "REQ-10: Jira connector — KR bound to JQL/epic progress",
+      "bodyHash": "7fbf0d305ebf666f",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:20Z"
+    },
+    "11": {
+      "title": "REQ-11: One-command deploy — docker compose up",
+      "bodyHash": "1cf74b5a12281707",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:21Z"
+    },
+    "12": {
+      "title": "REQ-12: Public read-only dashboard — per-team share link",
+      "bodyHash": "ec6f82e4035369d8",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:24Z"
+    },
+    "13": {
+      "title": "REQ-13: OIDC SSO — generic OIDC alongside password login",
+      "bodyHash": "e73284bdccffcf52",
+      "labels": [],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:27Z"
+    },
+    "14": {
+      "title": "Backlog: Guided OKR wizard-lite — templates + KR-type picker",
+      "bodyHash": "6320ff7b11bbf386",
+      "labels": [
+        "backlog"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:32Z"
+    },
+    "15": {
+      "title": "Backlog: KPI tracking beside OKRs",
+      "bodyHash": "8bf7fa0972c4402c",
+      "labels": [
+        "backlog"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:34Z"
+    },
+    "16": {
+      "title": "Backlog: AI drafting help for writing good KRs (BYO key)",
+      "bodyHash": "a68c9106b216c583",
+      "labels": [
+        "backlog"
+      ],
+      "state": "open",
+      "updatedAt": "2026-07-31T00:02:36Z"
+    }
+  },
+  "phases": {
+    "1": "Phase 1: Foundation",
+    "2": "Phase 2: Auth and Teams",
+    "3": "Phase 3: OKR Core",
+    "4": "Phase 4: Web UI"
+  }
+}
