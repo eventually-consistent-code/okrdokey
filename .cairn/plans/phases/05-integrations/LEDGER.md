@@ -1,0 +1,5 @@
+# Phase 5: integrations — Ledger
+
+<!-- append-only; one line per verified task; server appends, never rewrites -->
+
+- [x] 8 — API tokens (hashed, gated bearer), machine push as source-marked check-ins, sync engine with backoff — 153 tests green — commits 2661f07..7db4d33 — 8 closed 2026-07-31

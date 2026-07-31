@@ -54,8 +54,8 @@
       "title": "REQ-08: KR auto-update API — scoped tokens + push endpoint",
       "bodyHash": "0ecb7b0b8087b105",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T08:30:15Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T08:37:39Z"
     },
     "9": {
       "title": "REQ-09: GitHub connector — KR bound to issue/milestone progress",
