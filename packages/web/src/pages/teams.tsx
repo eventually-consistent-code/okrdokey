@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 
 import { apiFetch, ApiError } from '../api.js';
+import { AiKeyCard } from '../components/ai-key-card.js';
 import { Button, Card } from '../components/bits.js';
 import { ReminderForm } from '../components/reminder-form.js';
 import { KpiPanel } from '../components/kpi-panel.js';
@@ -186,6 +187,7 @@ export function TeamPage(): ReactNode {
       </Card>
 
       <KpiPanel teamId={t.id} isAdmin={isAdmin} />
+      {isAdmin ? <AiKeyCard teamId={t.id} /> : null}
       {isAdmin ? <ReminderForm teamId={t.id} /> : null}
       {isAdmin ? <ShareCard teamId={t.id} /> : null}
     </div>

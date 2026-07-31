@@ -5,6 +5,8 @@
  */
 
 import {
+  aiKeyResponseSchema,
+  aiStatusResponseSchema,
   checkInResponseSchema,
   createCheckInRequestSchema,
   createObjectiveRequestSchema,
@@ -18,6 +20,8 @@ import {
   reminderResponseSchema,
   teamDetailResponseSchema,
   teamResponseSchema,
+  draftKrsResponseSchema,
+  improveKrResponseSchema,
   upsertKrLinkRequestSchema,
   userResponseSchema,
   type CreateCheckInRequest,
@@ -25,6 +29,8 @@ import {
   type CreateKpiRequest,
   type CreateKeyResultRequest,
   type CreateObjectiveRequest,
+  type DraftKrsRequest,
+  type ImproveKrRequest,
   type UpsertKrLinkRequest,
   type UpsertReminderRequest,
 } from '@okrdokey/shared';
@@ -252,5 +258,89 @@ export function useArchiveKpi(teamId: string) {
     mutationFn: (kpiId: string) =>
       apiFetch(`/kpis/${kpiId}/archive`, kpiResponseSchema, { method: 'POST' }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['kpis', teamId] }),
+  });
+}
+
+// AI drafting — 404 on /ai/status means the feature is off entirely (routes
+// not registered); enabled:false means on but no key resolves yet (teaser)
+
+export function useAiStatus(objectiveId?: string) {
+  return useQuery({
+    queryKey: ['ai-status', objectiveId ?? 'none'],
+    queryFn: async () => {
+      try {
+        return await apiFetch(
+          objectiveId ? `/ai/status?objectiveId=${objectiveId}` : '/ai/status',
+          aiStatusResponseSchema,
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.statusCode === 404) return null;
+        throw err;
+      }
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useDraftKrs() {
+  return useMutation({
+    mutationFn: (body: DraftKrsRequest) =>
+      apiFetch('/ai/draft-krs', draftKrsResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
+export function useImproveKr() {
+  return useMutation({
+    mutationFn: (body: ImproveKrRequest) =>
+      apiFetch('/ai/improve-kr', improveKrResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
+// Team AI key — 404 on GET just means "no key set yet"
+
+export function useTeamAiKey(teamId: string) {
+  return useQuery({
+    queryKey: ['team-ai-key', teamId],
+    queryFn: async () => {
+      try {
+        return await apiFetch(`/teams/${teamId}/ai-key`, aiKeyResponseSchema);
+      } catch (err) {
+        if (err instanceof ApiError && err.statusCode === 404) return null;
+        throw err;
+      }
+    },
+  });
+}
+
+export function useSetTeamAiKey(teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (key: string) =>
+      apiFetch(`/teams/${teamId}/ai-key`, aiKeyResponseSchema, {
+        method: 'PUT',
+        body: JSON.stringify({ key }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['team-ai-key', teamId] });
+      void qc.invalidateQueries({ queryKey: ['ai-status'] });
+    },
+  });
+}
+
+export function useDeleteTeamAiKey(teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch(`/teams/${teamId}/ai-key`, z.null(), { method: 'DELETE' }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['team-ai-key', teamId] });
+      void qc.invalidateQueries({ queryKey: ['ai-status'] });
+    },
   });
 }
