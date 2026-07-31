@@ -19,8 +19,8 @@
       "title": "REQ-05: Teams — membership, personal and team OKRs",
       "bodyHash": "4bfc3299b3cc3d78",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T04:48:02Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T04:58:21Z"
     },
     "4": {
       "title": "REQ-01: OKR CRUD — objectives with key results",
@@ -89,8 +89,8 @@
       "title": "REQ-13: OIDC SSO — generic OIDC alongside password login",
       "bodyHash": "e73284bdccffcf52",
       "labels": [],
-      "state": "in_progress",
-      "updatedAt": "2026-07-31T04:48:03Z"
+      "state": "closed",
+      "updatedAt": "2026-07-31T04:58:22Z"
     },
     "14": {
       "title": "Backlog: Guided OKR wizard-lite — templates + KR-type picker",
