@@ -14,6 +14,7 @@ const app = await buildApp({
   dbPath: config.dbPath,
   sessionSecret: config.sessionSecret,
   oidc: config.oidc,
+  allowedOrigins: config.allowedOrigins,
 });
 
 try {

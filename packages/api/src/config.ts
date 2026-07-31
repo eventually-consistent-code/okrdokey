@@ -19,6 +19,7 @@ export interface AppConfig {
   dbPath: string;
   sessionSecret: string;
   oidc?: OidcConfig;
+  allowedOrigins: string[];
 }
 
 // OIDC is opt-in: all three core vars present → configured; all absent →
@@ -58,5 +59,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     dbPath: env.DB_PATH ?? './data/okrdokey.sqlite',
     sessionSecret: sessionSecret || 'dev-only-secret-do-not-use-in-production!!',
     oidc: loadOidcConfig(env, port),
+    // extra origins the CSRF check trusts (dev: the vite server)
+    allowedOrigins: (env.ALLOWED_ORIGINS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
 }

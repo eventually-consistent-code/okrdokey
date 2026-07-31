@@ -1,7 +1,9 @@
 /**
- * Purpose: Auth wiring — cookie + session plugins, the Drizzle session store,
- *          and the default-deny authorization hook. Forgetting to mark a route
- *          public fails CLOSED (401), never open.
+ * Purpose: Auth wiring, split in two. sessionPlugin (global): cookie +
+ *          session store + request.user decoration. addAuthGuard (scoped):
+ *          the default-deny hook — registered ONLY on the API context so
+ *          static assets and the SPA fallback stay reachable. Forgetting to
+ *          mark an API route public still fails CLOSED.
  * Author(s): John Reed
  */
 
@@ -14,8 +16,13 @@ import fp from 'fastify-plugin';
 import { users } from '../db/schema.js';
 import { DrizzleSessionStore } from './session-store.js';
 
-export interface AuthPluginOptions {
+export interface SessionPluginOptions {
   sessionSecret: string;
+}
+
+export interface AuthGuardOptions {
+  // extra origins allowed by the CSRF check (dev: the vite server)
+  allowedOrigins?: string[];
 }
 
 export interface SessionUser {
@@ -39,14 +46,17 @@ const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 // Cross-site writes get rejected before any handler runs (CSRF layer;
 // SameSite=Lax on the cookie is the other layer)
-function crossSiteWrite(req: FastifyRequest): boolean {
+function crossSiteWrite(req: FastifyRequest, allowedOrigins: string[]): boolean {
   if (!UNSAFE_METHODS.has(req.method)) return false;
 
   const secFetchSite = req.headers['sec-fetch-site'];
-  if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') return true;
+  if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
+    if (!req.headers.origin || !allowedOrigins.includes(req.headers.origin)) return true;
+  }
 
   const origin = req.headers.origin;
   if (origin) {
+    if (allowedOrigins.includes(origin)) return false;
     try {
       return new URL(origin).host !== req.headers.host;
     } catch {
@@ -56,7 +66,10 @@ function crossSiteWrite(req: FastifyRequest): boolean {
   return false;
 }
 
-async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions): Promise<void> {
+async function sessionPluginImpl(
+  app: FastifyInstance,
+  opts: SessionPluginOptions,
+): Promise<void> {
   await app.register(cookie);
   await app.register(session, {
     secret: opts.sessionSecret,
@@ -72,12 +85,17 @@ async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions): Promis
   });
 
   app.decorateRequest('user', null);
+}
 
-  // Default-deny: every route is protected unless it opts out with
-  // config: { public: true }. /docs stays open (swagger-ui registers its own
-  // routes and can't carry our config).
-  app.addHook('onRequest', async (req: FastifyRequest, reply: FastifyReply) => {
-    if (crossSiteWrite(req)) {
+export const sessionPlugin = fp(sessionPluginImpl, { name: 'session' });
+
+// Default-deny guard — add to the API context ONLY. Routes opt out with
+// config: { public: true }.
+export function addAuthGuard(api: FastifyInstance, opts: AuthGuardOptions = {}): void {
+  const allowedOrigins = opts.allowedOrigins ?? [];
+
+  api.addHook('onRequest', async (req: FastifyRequest, reply: FastifyReply) => {
+    if (crossSiteWrite(req, allowedOrigins)) {
       return reply.status(403).send({
         statusCode: 403,
         error: 'ForbiddenError',
@@ -90,10 +108,10 @@ async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions): Promis
     if (!req.routeOptions.url) return;
 
     const routeConfig = req.routeOptions.config as { public?: boolean } | undefined;
-    const isPublic = routeConfig?.public === true || req.url === '/docs' || req.url.startsWith('/docs/');
+    const isPublic = routeConfig?.public === true;
 
     if (req.session.userId) {
-      const row = app.db.select().from(users).where(eq(users.id, req.session.userId)).get();
+      const row = api.db.select().from(users).where(eq(users.id, req.session.userId)).get();
       if (row) {
         req.user = {
           id: row.id,
@@ -113,5 +131,3 @@ async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions): Promis
     }
   });
 }
-
-export default fp(authPlugin, { name: 'auth' });

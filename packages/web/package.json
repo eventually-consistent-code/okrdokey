@@ -1,0 +1,38 @@
+{
+  "name": "@okrdokey/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OKRdokey web UI — Vite + React SPA, served by the API in production",
+  "author": "John Reed",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.2.0",
+    "@fontsource/ibm-plex-mono": "^5.2.0",
+    "@hookform/resolvers": "^5.5.7",
+    "@okrdokey/shared": "*",
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "^1.170.18",
+    "radix-ui": "^1.6.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-hook-form": "^7.83.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "happy-dom": "^20.11.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.2.0"
+  }
+}
